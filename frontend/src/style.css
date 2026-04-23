@@ -224,7 +224,8 @@ code {
 }
 
 .ghost-button,
-.primary-button {
+.primary-button,
+.secondary-button {
   min-height: 42px;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -596,7 +597,18 @@ code {
   color: #ffffff;
 }
 
+.secondary-button {
+  background: #ffffff;
+  color: #1e62b3;
+  border-color: #c7d8eb;
+}
+
 .primary-button.small {
+  min-height: 38px;
+  padding: 0 16px;
+}
+
+.secondary-button.small {
   min-height: 38px;
   padding: 0 16px;
 }
@@ -605,8 +617,19 @@ code {
   background: #19569d;
 }
 
+.secondary-button:hover {
+  background: #f4f8fd;
+}
+
 .primary-button:disabled {
   background: #92afd4;
+  cursor: not-allowed;
+}
+
+.secondary-button:disabled {
+  color: #7e94ab;
+  border-color: #d5e0eb;
+  background: #f8fafc;
   cursor: not-allowed;
 }
 
@@ -777,4 +800,62 @@ code {
 .compact-table td {
   padding-top: 10px;
   padding-bottom: 10px;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.form-field--stacked {
+  margin-top: 16px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #cfd9e4;
+  padding: 10px 12px;
+  background: #ffffff;
+  color: #1d2733;
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  outline: none;
+  border-color: #1f64b5;
+  box-shadow: 0 0 0 3px rgba(31, 100, 181, 0.12);
+}
+
+.form-field input:disabled,
+.form-field select:disabled,
+.form-field textarea:disabled {
+  background: #f5f8fc;
+  color: #5f6f80;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.success-text {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #166534;
+}
+
+.detail-title-row--compact {
+  margin-bottom: 12px;
 }

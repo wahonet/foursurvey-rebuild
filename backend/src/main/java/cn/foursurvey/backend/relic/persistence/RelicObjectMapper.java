@@ -3,10 +3,12 @@ package cn.foursurvey.backend.relic.persistence;
 import cn.foursurvey.backend.relic.model.RelicObjectDetail;
 import cn.foursurvey.backend.relic.model.RelicObjectListItem;
 import cn.foursurvey.backend.relic.model.RelicObjectPointView;
+import cn.foursurvey.backend.relic.model.RelicObjectUpdateRequest;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface RelicObjectMapper {
@@ -75,4 +77,28 @@ public interface RelicObjectMapper {
             ORDER BY id ASC
             """)
     List<RelicObjectPointView> findPointsByObjectId(@Param("relicObjectId") Long relicObjectId);
+
+    @Update("""
+            UPDATE fs_relic_object
+            SET
+              object_name = #{request.objectName},
+              category_code = #{request.categoryCode},
+              survey_status = #{request.surveyStatus},
+              check_status = #{request.checkStatus},
+              address_text = #{request.addressText},
+              era_text = #{request.eraText},
+              current_use = #{request.currentUse},
+              abstract_text = #{request.abstractText},
+              protection_scope = #{request.protectionScope},
+              construction_control = #{request.constructionControl},
+              fill_started_at = CASE
+                  WHEN fill_started_at IS NULL THEN NOW()
+                  ELSE fill_started_at
+              END,
+              updated_at = NOW()
+            WHERE id = #{id}
+            """)
+    int updateById(
+            @Param("id") Long id,
+            @Param("request") RelicObjectUpdateRequest request);
 }

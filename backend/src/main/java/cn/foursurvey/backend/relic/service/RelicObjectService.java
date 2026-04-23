@@ -4,6 +4,7 @@ import cn.foursurvey.backend.common.exception.ApiException;
 import cn.foursurvey.backend.relic.model.RelicObjectDetail;
 import cn.foursurvey.backend.relic.model.RelicObjectListItem;
 import cn.foursurvey.backend.relic.model.RelicObjectPointView;
+import cn.foursurvey.backend.relic.model.RelicObjectUpdateRequest;
 import cn.foursurvey.backend.relic.persistence.RelicObjectMapper;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -30,5 +31,18 @@ public class RelicObjectService {
         List<RelicObjectPointView> points = relicObjectMapper.findPointsByObjectId(id);
         detail.setPoints(points);
         return detail;
+    }
+
+    public RelicObjectDetail update(Long id, RelicObjectUpdateRequest request) {
+        RelicObjectDetail existing = relicObjectMapper.findDetailById(id);
+        if (existing == null) {
+            throw new ApiException(404, "对象详情不存在");
+        }
+
+        int updated = relicObjectMapper.updateById(id, request);
+        if (updated < 1) {
+            throw new ApiException(500, "对象保存失败");
+        }
+        return findDetail(id);
     }
 }

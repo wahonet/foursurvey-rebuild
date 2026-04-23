@@ -3,10 +3,14 @@ package cn.foursurvey.backend.relic.web;
 import cn.foursurvey.backend.common.api.ApiResponse;
 import cn.foursurvey.backend.relic.model.RelicObjectDetail;
 import cn.foursurvey.backend.relic.model.RelicObjectListItem;
+import cn.foursurvey.backend.relic.model.RelicObjectUpdateRequest;
 import cn.foursurvey.backend.relic.service.RelicObjectService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,5 +34,12 @@ public class RelicObjectController {
     @GetMapping("/{id}")
     public ApiResponse<RelicObjectDetail> detail(@PathVariable Long id) {
         return ApiResponse.ok(relicObjectService.findDetail(id));
+    }
+
+    @PutMapping("/{id}")
+    public ApiResponse<RelicObjectDetail> update(
+            @PathVariable Long id,
+            @Valid @RequestBody RelicObjectUpdateRequest request) {
+        return ApiResponse.ok(relicObjectService.update(id, request));
     }
 }

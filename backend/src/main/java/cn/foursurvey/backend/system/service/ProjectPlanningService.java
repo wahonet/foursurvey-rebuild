@@ -23,7 +23,7 @@ public class ProjectPlanningService {
         return new BootstrapPayload(
                 projectName,
                 currentPhase,
-                "对象详情与接收批次骨架",
+                "对象编辑表单与接收处理动作",
                 docsPath,
                 List.of(
                         new BootstrapPhase("01", "基础平台", "IN_PROGRESS", "登录、权限、菜单、组织与基础字典"),

@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface ReceiveBatchMapper {
@@ -69,4 +70,33 @@ public interface ReceiveBatchMapper {
             ORDER BY id ASC
             """)
     List<ReceiveRecordView> findRecordsByBatchId(@Param("batchId") Long batchId);
+
+    @Update("""
+            UPDATE fs_receive_batch
+            SET
+              receive_status = #{receiveStatus},
+              remark = #{remark},
+              operator_id = #{operatorId},
+              updated_at = NOW()
+            WHERE id = #{id}
+            """)
+    int updateBatchStatus(
+            @Param("id") Long id,
+            @Param("receiveStatus") String receiveStatus,
+            @Param("remark") String remark,
+            @Param("operatorId") Long operatorId);
+
+    @Update("""
+            UPDATE fs_receive_record
+            SET
+              receive_status = #{receiveStatus},
+              operator_name = #{operatorName},
+              operated_at = NOW(),
+              updated_at = NOW()
+            WHERE batch_id = #{batchId}
+            """)
+    int updateRecordStatusByBatchId(
+            @Param("batchId") Long batchId,
+            @Param("receiveStatus") String receiveStatus,
+            @Param("operatorName") String operatorName);
 }

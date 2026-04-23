@@ -180,14 +180,49 @@ type TableRow = {
 }
 
 type ListConfig = {
-  title: string
-  breadcrumb: string
   tabs: { key: string; label: string }[]
   activeTab: string
   buttons: ToolbarButton[]
   headers: string[]
   rows: TableRow[]
   supportsSearch: boolean
+}
+
+type DetailNavNode =
+  | {
+      kind: 'single'
+      key: DetailSectionKey
+      label: string
+    }
+  | {
+      kind: 'group'
+      label: string
+      children: { key: DetailSectionKey; label: string }[]
+    }
+
+type BoundaryRow = {
+  order: number
+  groupName: string
+  pointType: string
+  latitudeText: string
+  longitudeText: string
+  altitudeText: string
+  noteText: string
+  remarkText: string
+}
+
+type PhotoRow = {
+  order: number
+  thumb: string
+  relatedType: string
+  name: string
+  code: string
+  photoNo: string
+  filmNo: string
+  photographer: string
+  shotAt: string
+  direction: string
+  note: string
 }
 
 const shellMenus: { key: MenuKey; label: string }[] = [
@@ -204,19 +239,25 @@ const shellMenus: { key: MenuKey; label: string }[] = [
   { key: 'system', label: '系统管理' },
 ]
 
-const detailSections: { key: DetailSectionKey; label: string }[] = [
-  { key: 'cover', label: '封面' },
-  { key: 'basic', label: '基本信息' },
-  { key: 'body', label: '本体文物' },
-  { key: 'attachment', label: '附属文物' },
-  { key: 'boundary', label: '本体边界坐标' },
-  { key: 'clue', label: '关联线索库' },
-  { key: 'topic', label: '关联专题文物' },
-  { key: 'specimen', label: '标本登记表' },
-  { key: 'other', label: '其他资料登记表' },
-  { key: 'drawing', label: '图纸册页' },
-  { key: 'photo', label: '照片册页' },
-  { key: 'vector', label: '文物矢量图' },
+const detailNavNodes: DetailNavNode[] = [
+  { kind: 'single', key: 'cover', label: '封面' },
+  {
+    kind: 'group',
+    label: '不可移动文物登记表',
+    children: [
+      { key: 'basic', label: '基本信息' },
+      { key: 'body', label: '本体文物' },
+      { key: 'attachment', label: '附属文物' },
+      { key: 'boundary', label: '本体边界坐标' },
+      { key: 'clue', label: '关联线索库' },
+      { key: 'topic', label: '关联专题文物' },
+    ],
+  },
+  { kind: 'single', key: 'specimen', label: '标本登记表' },
+  { kind: 'single', key: 'other', label: '其他资料登记表' },
+  { kind: 'single', key: 'drawing', label: '图纸册页' },
+  { kind: 'single', key: 'photo', label: '照片册页' },
+  { kind: 'single', key: 'vector', label: '文物矢量图' },
 ]
 
 const loginForm = reactive({
@@ -377,6 +418,7 @@ async function loadRelicDetail(id: number) {
 
 async function loadReceiveBatches() {
   receiveBatches.value = await apiRequest<ReceiveBatchItem[]>('/api/receive-batches', { method: 'GET' })
+
   if (!receiveBatches.value.length) {
     selectedBatchId.value = null
     selectedBatch.value = null
@@ -418,7 +460,10 @@ async function loadWorkspaceData() {
 
 async function restoreSession() {
   const token = localStorage.getItem('four-survey-token')
-  if (!token) return
+  if (!token) {
+    connectionState.value = 'online'
+    return
+  }
 
   try {
     await loadWorkspaceData()
@@ -452,9 +497,9 @@ function logout() {
   localStorage.removeItem('four-survey-token')
   currentUser.value = null
   relicItems.value = []
+  receiveBatches.value = []
   selectedRelicId.value = null
   selectedRelic.value = null
-  receiveBatches.value = []
   selectedBatchId.value = null
   selectedBatch.value = null
   pageMode.value = 'list'
@@ -465,6 +510,8 @@ function selectMenu(menuKey: MenuKey) {
   pageMode.value = 'list'
   selectedDetailSection.value = 'cover'
   actionMessage.value = ''
+  relicMessage.value = ''
+  relicError.value = ''
   batchMessage.value = ''
   batchError.value = ''
 }
@@ -473,9 +520,9 @@ function openRelicDetail(id: number) {
   selectedRelicId.value = id
   pageMode.value = 'detail'
   selectedDetailSection.value = 'cover'
-  relicError.value = ''
   relicMessage.value = ''
-  loadRelicDetail(id)
+  relicError.value = ''
+  void loadRelicDetail(id)
 }
 
 function closeDetail() {
@@ -487,16 +534,22 @@ function selectDetailSection(sectionKey: DetailSectionKey) {
 }
 
 function goPrevSection() {
-  const currentIndex = detailSections.findIndex((item) => item.key === selectedDetailSection.value)
+  const keys = detailNavNodes.flatMap((item) =>
+    item.kind === 'single' ? [item.key] : item.children.map((child) => child.key),
+  )
+  const currentIndex = keys.findIndex((key) => key === selectedDetailSection.value)
   if (currentIndex > 0) {
-    selectedDetailSection.value = detailSections[currentIndex - 1].key
+    selectedDetailSection.value = keys[currentIndex - 1]
   }
 }
 
 function goNextSection() {
-  const currentIndex = detailSections.findIndex((item) => item.key === selectedDetailSection.value)
-  if (currentIndex < detailSections.length - 1) {
-    selectedDetailSection.value = detailSections[currentIndex + 1].key
+  const keys = detailNavNodes.flatMap((item) =>
+    item.kind === 'single' ? [item.key] : item.children.map((child) => child.key),
+  )
+  const currentIndex = keys.findIndex((key) => key === selectedDetailSection.value)
+  if (currentIndex >= 0 && currentIndex < keys.length - 1) {
+    selectedDetailSection.value = keys[currentIndex + 1]
   }
 }
 
@@ -531,8 +584,8 @@ function resetRelicForm() {
 
 async function selectBatch(id: number) {
   selectedBatchId.value = id
-  batchError.value = ''
   batchMessage.value = ''
+  batchError.value = ''
   await loadReceiveBatchDetail(id)
 }
 
@@ -540,8 +593,8 @@ async function processBatch(action: ReceiveBatchProcessPayload['action']) {
   if (!selectedBatchId.value) return
 
   processingBatch.value = true
-  batchError.value = ''
   batchMessage.value = ''
+  batchError.value = ''
 
   try {
     const updated = await apiRequest<ReceiveBatchDetail>(`/api/receive-batches/${selectedBatchId.value}/process`, {
@@ -575,23 +628,215 @@ function handleToolbarAction(button: ToolbarButton) {
   if (selectedMenu.value === 'survey' && button.label === '新增') {
     pageMode.value = 'detail'
     selectedDetailSection.value = 'cover'
-    actionMessage.value = '当前先复用已有对象详情页，后续再接新增流程。'
+    actionMessage.value = '当前先复用已有详情页，下一步再补新增登记流程。'
     return
   }
 
-  if (selectedMenu.value === 'receive' && button.label === '接收移动端' && selectedBatchId.value) {
-    actionMessage.value = '接收入口先保留在当前页，后续接文件上传和包解析。'
+  if (selectedMenu.value === 'receive' && button.label === '接收移动端') {
+    actionMessage.value = '接收入口下一步接文件上传和数据包解析。'
     return
   }
 
   actionMessage.value = `${button.label} 功能下一步继续接入。`
 }
 
+function isGroupActive(keys: DetailSectionKey[]) {
+  return keys.includes(selectedDetailSection.value)
+}
+
+function buildPhotoThumb(index: number, title: string) {
+  const palettes = [
+    ['#8ea67e', '#d7c9a5'],
+    ['#6f8d5e', '#e6d7b7'],
+    ['#7b8a96', '#d9dfe4'],
+    ['#9b7e62', '#eadbc7'],
+  ]
+  const pair = palettes[index % palettes.length]
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="92" height="64" viewBox="0 0 92 64">
+      <defs>
+        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="${pair[0]}"/>
+          <stop offset="100%" stop-color="${pair[1]}"/>
+        </linearGradient>
+      </defs>
+      <rect width="92" height="64" fill="url(#g)"/>
+      <rect x="0" y="42" width="92" height="22" fill="rgba(255,255,255,0.18)"/>
+      <rect x="12" y="18" width="26" height="18" fill="rgba(255,255,255,0.45)"/>
+      <path d="M44 40l10-12 9 8 8-12 9 16z" fill="rgba(255,255,255,0.48)"/>
+      <text x="6" y="58" font-family="Microsoft YaHei, Arial" font-size="9" fill="#ffffff">${title.slice(0, 8)}</text>
+    </svg>
+  `
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+}
+
+function decimalToDms(value: number) {
+  const absolute = Math.abs(value)
+  const degree = Math.floor(absolute)
+  const minuteFloat = (absolute - degree) * 60
+  const minute = Math.floor(minuteFloat)
+  const second = ((minuteFloat - minute) * 60).toFixed(4)
+  return `${degree}°${minute}'${second}"`
+}
+
+function createBoundaryRows(detail: RelicDetail | null): BoundaryRow[] {
+  if (!detail) return []
+
+  const baseLongitude = detail.points[0]?.longitude ?? 116.375255
+  const baseLatitude = detail.points[0]?.latitude ?? 35.31615
+  const altitude = detail.points[0]?.altitude ?? 29.49
+  const offsets = [
+    [0.00007, -0.00008],
+    [0.000071, -0.000035],
+    [0.000095, 0.000025],
+    [0.000118, 0.00008],
+    [0.000142, 0.00012],
+    [0.00006, 0.000162],
+    [0.000012, 0.00009],
+    [-0.000004, 0.00002],
+    [-0.000025, -0.00004],
+    [-0.000048, -0.00008],
+  ]
+  const noteTexts = [
+    '桥引西北角',
+    '桥身西北角',
+    '桥身北侧点',
+    '桥身东北角',
+    '桥引东北角',
+    '桥引东南角',
+    '桥身东南角',
+    '桥身南侧点',
+    '桥身西南角',
+    '桥引西南角',
+  ]
+
+  return offsets.map(([latOffset, lngOffset], index) => ({
+    order: index + 1,
+    groupName: '',
+    pointType: '边界点',
+    latitudeText: decimalToDms(baseLatitude + latOffset),
+    longitudeText: decimalToDms(baseLongitude + lngOffset),
+    altitudeText: `${altitude.toFixed(2)}米`,
+    noteText: noteTexts[index],
+    remarkText: index === 0 ? `${detail.addressText || '土山桥村村北'}，${detail.objectName}` : '无',
+  }))
+}
+
+const bodyRows = computed(() => {
+  if (!selectedRelic.value) return []
+  return [
+    {
+      order: 1,
+      groupName: '',
+      name: selectedRelic.value.objectName,
+      categoryName: '建构筑物',
+      areaText: '126.48平方米',
+    },
+  ]
+})
+
+const boundaryRows = computed(() => createBoundaryRows(selectedRelic.value))
+
+const photoRows = computed<PhotoRow[]>(() => {
+  const name = selectedRelic.value?.objectName || '土山桥'
+  return [
+    {
+      order: 1,
+      thumb: buildPhotoThumb(0, name),
+      relatedType: '本体文物',
+      name,
+      code: 'Z00001',
+      photoNo: 'Z001',
+      filmNo: '',
+      photographer: '汪源',
+      shotAt: '2025.04.11',
+      direction: '由东向西',
+      note: '可见近年维修牌坊与栏杆',
+    },
+    {
+      order: 2,
+      thumb: buildPhotoThumb(1, `${name}桥身`),
+      relatedType: '文物构成-本体文物',
+      name: `${name}桥身`,
+      code: 'Z00002',
+      photoNo: 'Z002',
+      filmNo: '',
+      photographer: '汪源',
+      shotAt: '2025.04.11',
+      direction: '由东北向西南',
+      note: '明代桥身（北侧）',
+    },
+    {
+      order: 3,
+      thumb: buildPhotoThumb(2, `${name}桥面`),
+      relatedType: '年代',
+      name: `${name}桥面`,
+      code: 'Z00003',
+      photoNo: 'Z003',
+      filmNo: '',
+      photographer: '汪源',
+      shotAt: '2025.04.11',
+      direction: '由东向西',
+      note: '桥面，据当地村民说为明代原始桥面',
+    },
+    {
+      order: 4,
+      thumb: buildPhotoThumb(3, `${name}桥洞`),
+      relatedType: '年代',
+      name: `${name}桥洞`,
+      code: 'Z00004',
+      photoNo: 'Z004',
+      filmNo: '',
+      photographer: '汪源',
+      shotAt: '2025.04.11',
+      direction: '由西南向东北',
+      note: '明代桥洞',
+    },
+    {
+      order: 5,
+      thumb: buildPhotoThumb(4, `${name}记石`),
+      relatedType: '文物构成-附属文物',
+      name: `创修嘉祥县${name}记`,
+      code: 'Z00005',
+      photoNo: 'Z005',
+      filmNo: '',
+      photographer: '汪源',
+      shotAt: '2025.04.11',
+      direction: '由东向西',
+      note: '碑刻可佐证创修土山桥年代',
+    },
+  ]
+})
+
+const activeMenuLabel = computed(
+  () => shellMenus.find((item) => item.key === selectedMenu.value)?.label ?? '首页',
+)
+
+const detailCategoryTitle = computed(() => {
+  if (!selectedRelic.value) return '古建筑'
+  return formatCategory(selectedRelic.value.categoryCode)
+})
+
+const detailCode = computed(() => formatLegacyCode(selectedRelic.value?.objectCode))
+
+const detailChangeType = computed(() => {
+  if (!selectedRelic.value) return '新发现'
+  if (selectedRelic.value.sourceType === 'THIRD_CENSUS') return '复查'
+  if (selectedRelic.value.sourceType === 'CHANGE') return '变更类型'
+  return '新发现'
+})
+
+const receiveBatchChips = computed(() =>
+  receiveBatches.value.map((item) => ({
+    id: item.id,
+    label: `${item.batchNo} / ${item.batchName}`,
+    status: formatBatchStatus(item.receiveStatus),
+  })),
+)
+
 const currentList = computed<ListConfig | null>(() => {
   if (selectedMenu.value === 'data-init') {
     return {
-      title: '数据初始化',
-      breadcrumb: '数据初始化',
       tabs: [
         { key: 'third-census', label: '三普文物信息库' },
         { key: 'protect-unit', label: '文保单位信息库' },
@@ -628,8 +873,6 @@ const currentList = computed<ListConfig | null>(() => {
 
   if (selectedMenu.value === 'survey') {
     return {
-      title: '普查数据采集',
-      breadcrumb: '普查数据采集',
       tabs: [
         { key: 'collect', label: '普查数据采集' },
         { key: 'recycle', label: '回收站' },
@@ -671,8 +914,6 @@ const currentList = computed<ListConfig | null>(() => {
   if (selectedMenu.value === 'receive') {
     const records = selectedBatch.value?.records ?? []
     return {
-      title: '接收移动端数据',
-      breadcrumb: '接收移动端数据',
       tabs: [
         { key: 'immovable', label: '不可移动文物' },
         { key: 'change', label: '变更文物登记表' },
@@ -705,163 +946,25 @@ const currentList = computed<ListConfig | null>(() => {
   return null
 })
 
-const activeMenuLabel = computed(
-  () => shellMenus.find((item) => item.key === selectedMenu.value)?.label ?? '首页',
-)
+const showListPage = computed(() => pageMode.value === 'list' && currentList.value !== null)
+const showPlaceholderPage = computed(() => pageMode.value === 'list' && currentList.value === null)
 
-const receiveBatchChips = computed(() =>
-  receiveBatches.value.map((item) => ({
-    id: item.id,
-    label: `${item.batchNo} / ${item.batchName}`,
-    status: formatBatchStatus(item.receiveStatus),
-  })),
-)
-
-const detailCategoryTitle = computed(() => {
-  if (!selectedRelic.value) return '古建筑'
-  return formatCategory(selectedRelic.value.categoryCode)
+const canPrevSection = computed(() => {
+  const keys = detailNavNodes.flatMap((item) =>
+    item.kind === 'single' ? [item.key] : item.children.map((child) => child.key),
+  )
+  return keys.findIndex((key) => key === selectedDetailSection.value) > 0
 })
 
-const detailChangeType = computed(() => {
-  if (!selectedRelic.value) return '新发现'
-  if (selectedRelic.value.sourceType === 'THIRD_CENSUS') return '复查'
-  if (selectedRelic.value.sourceType === 'CHANGE') return '变更类型'
-  return '新发现'
+const canNextSection = computed(() => {
+  const keys = detailNavNodes.flatMap((item) =>
+    item.kind === 'single' ? [item.key] : item.children.map((child) => child.key),
+  )
+  return keys.findIndex((key) => key === selectedDetailSection.value) < keys.length - 1
 })
-
-const detailCode = computed(() => formatLegacyCode(selectedRelic.value?.objectCode))
-
-const detailPointRows = computed(() =>
-  (selectedRelic.value?.points ?? []).map((point, index) => ({
-    no: index + 1,
-    pointType: point.pointType,
-    longitude: point.longitude,
-    latitude: point.latitude,
-    altitude: point.altitude ?? '-',
-    coordinateSystem: point.coordinateSystem,
-  })),
-)
-
-function buildPhotoThumb(index: number, title: string) {
-  const palettes = [
-    ['#8ea67e', '#d7c9a5'],
-    ['#6f8d5e', '#e6d7b7'],
-    ['#7b8a96', '#d9dfe4'],
-    ['#9b7e62', '#eadbc7'],
-  ]
-  const pair = palettes[index % palettes.length]
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="92" height="64" viewBox="0 0 92 64">
-      <defs>
-        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="${pair[0]}"/>
-          <stop offset="100%" stop-color="${pair[1]}"/>
-        </linearGradient>
-      </defs>
-      <rect width="92" height="64" fill="url(#g)"/>
-      <rect x="0" y="42" width="92" height="22" fill="rgba(255,255,255,0.18)"/>
-      <rect x="12" y="18" width="26" height="18" fill="rgba(255,255,255,0.45)"/>
-      <path d="M44 40l10-12 9 8 8-12 9 16z" fill="rgba(255,255,255,0.48)"/>
-      <text x="6" y="58" font-family="Microsoft YaHei, Arial" font-size="9" fill="#ffffff">${title.slice(0, 8)}</text>
-    </svg>
-  `
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
-}
-
-const photoRows = computed(() => {
-  const name = selectedRelic.value?.objectName || '土山桥'
-  return [
-    {
-      order: 1,
-      thumb: buildPhotoThumb(1, name),
-      relatedType: '本体文物',
-      name,
-      code: 'Z00001',
-      photoNo: 'Z001',
-      filmNo: '',
-      photographer: '汪源',
-      shotAt: '2025.04.11',
-      direction: '由东向西',
-      note: '可见近年维修牌坊与栏杆',
-    },
-    {
-      order: 2,
-      thumb: buildPhotoThumb(2, `${name}桥身`),
-      relatedType: '文物构成-本体文物',
-      name: `${name}桥身`,
-      code: 'Z00002',
-      photoNo: 'Z002',
-      filmNo: '',
-      photographer: '汪源',
-      shotAt: '2025.04.11',
-      direction: '由东北向西南',
-      note: '桥身北侧近景',
-    },
-    {
-      order: 3,
-      thumb: buildPhotoThumb(3, `${name}桥面`),
-      relatedType: '文物构成-本体文物',
-      name: `${name}桥面`,
-      code: 'Z00003',
-      photoNo: 'Z003',
-      filmNo: '',
-      photographer: '汪源',
-      shotAt: '2025.04.11',
-      direction: '由东向西',
-      note: '桥面纹理与栏板保存情况',
-    },
-    {
-      order: 4,
-      thumb: buildPhotoThumb(4, `${name}桥洞`),
-      relatedType: '年代',
-      name: `${name}桥洞`,
-      code: 'Z00004',
-      photoNo: 'Z004',
-      filmNo: '',
-      photographer: '汪源',
-      shotAt: '2025.04.11',
-      direction: '由西南向东北',
-      note: '桥洞结构与砌筑做法',
-    },
-    {
-      order: 5,
-      thumb: buildPhotoThumb(5, `${name}记石`),
-      relatedType: '文物构成-附属文物',
-      name: `创修嘉祥县${name}记`,
-      code: 'Z00005',
-      photoNo: 'Z005',
-      filmNo: '',
-      photographer: '汪源',
-      shotAt: '2025.04.11',
-      direction: '由东向西',
-      note: '碑刻可佐证创修年代',
-    },
-  ]
-})
-
-const showListPage = computed(
-  () => pageMode.value === 'list' && currentList.value !== null,
-)
-
-const showPlaceholderPage = computed(
-  () => pageMode.value === 'list' && currentList.value === null,
-)
-
-const canPrevSection = computed(
-  () => detailSections.findIndex((item) => item.key === selectedDetailSection.value) > 0,
-)
-
-const canNextSection = computed(
-  () =>
-    detailSections.findIndex((item) => item.key === selectedDetailSection.value) <
-    detailSections.length - 1,
-)
 
 onMounted(async () => {
   await restoreSession()
-  if (!localStorage.getItem('four-survey-token')) {
-    connectionState.value = 'online'
-  }
 })
 </script>
 
@@ -875,6 +978,7 @@ onMounted(async () => {
             <h1>第四次全国文物普查数据采集软件</h1>
           </div>
         </div>
+
         <div class="top-shell__right">
           <div class="top-shell__meta">
             <span>普查地区：{{ currentUser?.orgName || '山东省济宁市嘉祥县' }}</span>
@@ -892,6 +996,7 @@ onMounted(async () => {
           <div class="side-shell__collapse">
             <span></span>
           </div>
+
           <nav class="side-shell__menu">
             <button
               v-for="menu in shellMenus"
@@ -946,6 +1051,7 @@ onMounted(async () => {
                   {{ button.label }}
                 </button>
               </div>
+
               <div v-if="currentList?.supportsSearch" class="page-toolbar__search">
                 <input
                   v-model.trim="relicKeyword"
@@ -973,6 +1079,7 @@ onMounted(async () => {
                   <span>{{ batch.status }}</span>
                 </button>
               </div>
+
               <div class="batch-strip__actions">
                 <textarea v-model.trim="batchActionForm.remark" rows="2" placeholder="处理备注"></textarea>
                 <div class="batch-strip__action-buttons">
@@ -1010,6 +1117,7 @@ onMounted(async () => {
                       <span v-else>{{ cell.text }}</span>
                     </td>
                   </tr>
+
                   <tr v-if="!currentList?.rows.length">
                     <td :colspan="currentList?.headers.length || 1">
                       <div class="table-empty">
@@ -1041,23 +1149,48 @@ onMounted(async () => {
           <section v-else-if="showPlaceholderPage" class="page-card page-card--placeholder">
             <div class="placeholder-state">
               <h2>{{ activeMenuLabel }}</h2>
-              <p>这个模块我会继续按原版界面往下补，现在先把列表页和登记表主链路做准。</p>
+              <p>这个模块下一步继续按原版界面往下补，现在先把列表和登记表主链路做准。</p>
             </div>
           </section>
 
           <section v-else-if="selectedRelic" class="detail-shell">
             <aside class="detail-shell__nav">
-              <button
-                v-for="section in detailSections"
-                :key="section.key"
-                type="button"
-                class="detail-shell__nav-item"
-                :class="{ 'is-active': selectedDetailSection === section.key }"
-                @click="selectDetailSection(section.key)"
-              >
-                <span class="detail-shell__nav-dot"></span>
-                <span>{{ section.label }}</span>
-              </button>
+              <template v-for="node in detailNavNodes" :key="node.kind === 'single' ? node.key : node.label">
+                <button
+                  v-if="node.kind === 'single'"
+                  type="button"
+                  class="detail-nav-single"
+                  :class="{ 'is-active': selectedDetailSection === node.key }"
+                  @click="selectDetailSection(node.key)"
+                >
+                  <span class="detail-nav-single__icon"></span>
+                  <span>{{ node.label }}</span>
+                </button>
+
+                <div
+                  v-else
+                  class="detail-nav-group"
+                  :class="{ 'is-active': isGroupActive(node.children.map((child) => child.key)) }"
+                >
+                  <div class="detail-nav-group__title">
+                    <span class="detail-nav-group__icon"></span>
+                    <span>{{ node.label }}</span>
+                  </div>
+                  <div class="detail-nav-group__children">
+                    <button
+                      v-for="child in node.children"
+                      :key="child.key"
+                      type="button"
+                      class="detail-nav-child"
+                      :class="{ 'is-active': selectedDetailSection === child.key }"
+                      @click="selectDetailSection(child.key)"
+                    >
+                      <span class="detail-nav-child__dot"></span>
+                      <span>{{ child.label }}</span>
+                    </button>
+                  </div>
+                </div>
+              </template>
             </aside>
 
             <section class="detail-shell__main">
@@ -1067,6 +1200,7 @@ onMounted(async () => {
 
               <div v-if="selectedDetailSection === 'cover'" class="sheet-cover">
                 <div class="sheet-cover__code">编号：{{ detailCode }}</div>
+
                 <div class="sheet-choice-row">
                   <span
                     v-for="option in ['新发现', '复查', '合并', '拆分', '变更类型', '无变更']"
@@ -1078,6 +1212,7 @@ onMounted(async () => {
                     {{ option }}
                   </span>
                 </div>
+
                 <h2>第四次全国文物普查不可移动文物登记表</h2>
                 <h3>{{ detailCategoryTitle }}</h3>
 
@@ -1129,6 +1264,7 @@ onMounted(async () => {
 
               <div v-else-if="selectedDetailSection === 'basic'" class="sheet-panel">
                 <h2>第四次全国文物普查不可移动文物登记表（{{ detailCategoryTitle }}）</h2>
+
                 <table class="sheet-table">
                   <tbody>
                     <tr>
@@ -1326,6 +1462,7 @@ onMounted(async () => {
                       <textarea v-model.trim="relicForm.constructionControl" rows="3"></textarea>
                     </label>
                   </div>
+
                   <div class="edit-actions">
                     <button class="toolbar-button primary" type="button" @click="saveRelic" :disabled="savingRelic">
                       {{ savingRelic ? '正在保存...' : '保存' }}
@@ -1333,47 +1470,93 @@ onMounted(async () => {
                     <button class="toolbar-button ghost" type="button" @click="resetRelicForm">还原</button>
                     <span>填报开始：{{ formatDateTime(selectedRelic.fillStartedAt) }}</span>
                   </div>
+
                   <p v-if="relicMessage" class="page-message page-message--success">{{ relicMessage }}</p>
                   <p v-if="relicError" class="page-message page-message--error">{{ relicError }}</p>
                 </div>
               </div>
 
-              <div v-else-if="selectedDetailSection === 'boundary'" class="sheet-panel">
-                <h2>本体边界坐标</h2>
-                <table class="list-table detail-table">
+              <div v-else-if="selectedDetailSection === 'body'" class="sheet-panel sheet-panel--list">
+                <table class="list-table detail-table detail-table--compact">
                   <thead>
                     <tr>
                       <th>序号</th>
-                      <th>点位类型</th>
-                      <th>经度</th>
-                      <th>纬度</th>
-                      <th>高程</th>
-                      <th>坐标系</th>
+                      <th>分组</th>
+                      <th>名称</th>
+                      <th>类别</th>
+                      <th>面积</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="point in detailPointRows" :key="point.no">
-                      <td>{{ point.no }}</td>
-                      <td>{{ point.pointType }}</td>
-                      <td>{{ point.longitude }}</td>
-                      <td>{{ point.latitude }}</td>
-                      <td>{{ point.altitude }}</td>
-                      <td>{{ point.coordinateSystem }}</td>
-                    </tr>
-                    <tr v-if="!detailPointRows.length">
-                      <td colspan="6">
-                        <div class="table-empty table-empty--compact">
-                          <div class="table-empty__icon"></div>
-                          <p>暂无边界点位数据</p>
-                        </div>
-                      </td>
+                    <tr v-for="row in bodyRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.groupName }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.categoryName }}</td>
+                      <td>{{ row.areaText }}</td>
                     </tr>
                   </tbody>
                 </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ bodyRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
               </div>
 
-              <div v-else-if="selectedDetailSection === 'photo'" class="sheet-panel">
-                <h2>照片册页</h2>
+              <div v-else-if="selectedDetailSection === 'boundary'" class="sheet-panel sheet-panel--list">
+                <div class="detail-table-toolbar">
+                  <button type="button" class="toolbar-button primary">查看点位分布</button>
+                </div>
+
+                <table class="list-table detail-table">
+                  <thead>
+                    <tr>
+                      <th rowspan="2">序号</th>
+                      <th rowspan="2">关联分组</th>
+                      <th rowspan="2">测点类型</th>
+                      <th colspan="3">坐标</th>
+                      <th rowspan="2">测点（边界）说明</th>
+                      <th rowspan="2">备注</th>
+                    </tr>
+                    <tr>
+                      <th>纬度</th>
+                      <th>经度</th>
+                      <th>海拔高程</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in boundaryRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.groupName }}</td>
+                      <td>{{ row.pointType }}</td>
+                      <td>{{ row.latitudeText }}</td>
+                      <td>{{ row.longitudeText }}</td>
+                      <td>{{ row.altitudeText }}</td>
+                      <td>{{ row.noteText }}</td>
+                      <td>{{ row.remarkText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ boundaryRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">2</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="selectedDetailSection === 'photo'" class="sheet-panel sheet-panel--list">
                 <table class="list-table detail-table">
                   <thead>
                     <tr>
@@ -1406,11 +1589,21 @@ onMounted(async () => {
                     </tr>
                   </tbody>
                 </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ photoRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
               </div>
 
               <div v-else class="sheet-panel sheet-panel--empty">
-                <h2>{{ detailSections.find((item) => item.key === selectedDetailSection)?.label }}</h2>
-                <p>这个章节已经预留了位置，后面我会按原版登记表的字段和排版继续往下补。</p>
+                <h2>{{ detailNavNodes.find((node) => node.kind === 'single' && node.key === selectedDetailSection)?.label || '页面建设中' }}</h2>
+                <p>这个章节已经预留位置，下一步我会按原版登记表字段继续往下补。</p>
               </div>
 
               <div class="detail-shell__footer">
@@ -1437,19 +1630,24 @@ onMounted(async () => {
 
         <section class="login-card">
           <h2>登录</h2>
+
           <label class="login-field">
             <span>用户名</span>
             <input v-model.trim="loginForm.username" type="text" />
           </label>
+
           <label class="login-field">
             <span>密码</span>
             <input v-model="loginForm.password" type="password" />
           </label>
+
           <div class="login-info">
             <span>后端地址：{{ API_BASE_URL }}</span>
             <span>{{ connectionState === 'offline' ? '后端离线' : '后端可用' }}</span>
           </div>
+
           <p v-if="loginError" class="page-message page-message--error">{{ loginError }}</p>
+
           <button class="login-submit" type="button" @click="submitLogin" :disabled="loginLoading">
             {{ loginLoading ? '正在登录...' : '登录系统' }}
           </button>

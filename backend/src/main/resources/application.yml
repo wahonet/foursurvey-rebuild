@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: four-survey-rebuild-backend
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:7306/four_survey_rebuild?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+server:
+  port: 18080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  project-name: 第四次全国文物普查复刻后端
+  current-phase: 基础平台
+  docs-path: G:/fourSurvey/四普离线端分析文档包
+  auth:
+    token-expire-hours: 8

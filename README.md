@@ -1,78 +1,77 @@
-# Four Survey Rebuild
+# FS Rebuild
 
-## 项目目标
+## Project Goal
 
-本目录用于复刻“第四次全国文物普查离线端”新系统源码骨架。
+This repository contains the rebuild workspace for the offline FS system.
 
-当前阶段目标：
+Current scope:
 
-1. 先搭建新系统工程结构
-2. 先落基础平台和数据主干
-3. 再逐步实现核心业务闭环
+1. Build a maintainable new project skeleton.
+2. Land the platform layer, core data model, and minimal business backbone first.
+3. Extend from login and dictionary services to menu, org tree, and object list step by step.
 
-不在第一阶段追求：
+Out of scope for the first stage:
 
-- 全量页面复刻
-- 地图能力完全兼容
-- 全量模板与升级机制复刻
+- Full legacy UI parity
+- Full map compatibility
+- Full report/export and upgrade behavior parity
 
-## 当前目录
+## Repository Structure
 
-- `backend`：Spring Boot + MyBatis 后端
-- `frontend`：Vue 3 + Vite 前端
-- `docs`：工程内简版说明
-- `sql`：新库与迁移草案
+- `backend`: Spring Boot + MyBatis backend
+- `frontend`: Vue 3 + Vite frontend
+- `docs`: lightweight engineering notes inside the project
+- `sql`: schema, seed, and migration draft files
 
-## 技术路线
+## Tech Stack
 
-- 后端：Spring Boot 3.5 + MyBatis + MySQL
-- 前端：Vue 3 + Vite + TypeScript
-- 数据库：MySQL，按业务域重建
-- 地图：后续独立抽层接入
+- Backend: Spring Boot 3.5 + MyBatis + MySQL
+- Frontend: Vue 3 + Vite + TypeScript
+- Database: MySQL, rebuilt by business domain
+- Map capability: isolated for a later integration stage
 
-## 开发顺序
+## Delivery Order
 
-### 第 1 步：基础平台
+### Step 1: Platform Layer
 
-- 登录与权限
-- 基础字典
-- 通用列表页与详情页框架
+- Login and auth
+- Base dictionary
+- Org tree and navigation menu
+- Shared list/detail page skeleton
 
-### 第 2 步：核心数据建模
+### Step 2: Core Data Model
 
-- 普查对象主档
-- 参照底账
-- 接收批次
-- 核查任务
+- Object master data
+- Reference records
+- Receive batches
+- Check tasks
 
-### 第 3 步：核心业务闭环
+### Step 3: Core Workflow
 
-- 数据初始化
-- 接收移动端数据
-- 普查对象详情
-- 质量核查
+- Data initialization
+- Receive mobile data
+- Object detail editing
+- Quality check
 
-### 第 4 步：增强能力
+### Step 4: Extended Capability
 
-- 地图工作台
-- 附件与导出
-- 报送省平台
+- Map workspace
+- Attachment and export
+- Upstream reporting
 
-## 文档位置
+## Local Notes
 
-完整分析文档包位于：
+The analysis bundle referenced by this workspace is stored locally in a separate document folder.
 
-- `G:\fourSurvey\四普离线端分析文档包`
+Recommended reading order:
 
-建议先阅读：
+1. Project document index
+2. Architecture and rebuild analysis
+3. Implementation plan and phase schedule
 
-1. `文档总目录与阅读顺序.md`
-2. `第四次全国文物普查离线端-架构与复刻分析.md`
-3. `复刻实施计划与阶段排期.md`
+## Current Status
 
-## 当前状态
-
-- 工程骨架已创建
-- 复刻工作台首页已替换默认脚手架页
-- 下一步进入首批数据模型与建表草案
-
+- Project skeleton created
+- Minimal auth and dictionary API landed
+- Org/menu/object-list skeleton is being added
+- Next step is to wire backend runtime against the new schema

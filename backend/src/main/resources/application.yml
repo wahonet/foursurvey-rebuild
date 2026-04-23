@@ -21,8 +21,8 @@ mybatis:
     map-underscore-to-camel-case: true
 
 app:
-  project-name: 第四次全国文物普查复刻后端
+  project-name: FS Rebuild Backend
   current-phase: 基础平台
-  docs-path: G:/fourSurvey/四普离线端分析文档包
+  docs-path: G:/fourSurvey/FS-doc-bundle
   auth:
     token-expire-hours: 8

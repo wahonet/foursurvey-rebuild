@@ -59,6 +59,10 @@ code {
   top: 0;
 }
 
+.sidebar h1 {
+  font-size: 30px;
+}
+
 .brand,
 .login-brand {
   display: flex;
@@ -74,7 +78,7 @@ code {
   place-items: center;
   background: #1e62b3;
   color: #ffffff;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -147,6 +151,76 @@ code {
 
 .dict-block + .dict-block {
   margin-top: 14px;
+}
+
+.menu-tree,
+.menu-children,
+.org-tree,
+.org-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-tree {
+  display: grid;
+  gap: 12px;
+}
+
+.menu-row,
+.org-node {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.menu-row span,
+.org-node span {
+  color: #d9e7f8;
+  font-size: 12px;
+}
+
+.menu-children,
+.org-children {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding-left: 16px;
+}
+
+.menu-children li,
+.org-children li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.menu-children code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.panel .org-node,
+.panel .org-children li {
+  background: #f5f8fc;
+}
+
+.panel .org-node span,
+.panel .org-children span {
+  color: #566575;
+}
+
+.panel .org-node.current {
+  border: 1px solid #c8dbef;
 }
 
 .ghost-button,
@@ -273,6 +347,26 @@ code {
   gap: 20px;
 }
 
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar input {
+  width: 260px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid #cfd9e4;
+  padding: 0 12px;
+}
+
+.toolbar input:focus {
+  outline: none;
+  border-color: #1f64b5;
+  box-shadow: 0 0 0 3px rgba(31, 100, 181, 0.12);
+}
+
 .panel-header,
 .preview-header {
   display: flex;
@@ -367,6 +461,39 @@ code {
   width: fit-content;
   background: #e4f0fb;
   color: #0d4e89;
+}
+
+.table-shell {
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 920px;
+}
+
+.data-table thead {
+  background: #f5f8fc;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e6edf3;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.empty-cell {
+  text-align: center !important;
+  color: #718193;
 }
 
 .path-block {
@@ -467,6 +594,11 @@ code {
 .primary-button {
   background: #1e62b3;
   color: #ffffff;
+}
+
+.primary-button.small {
+  min-height: 38px;
+  padding: 0 16px;
 }
 
 .primary-button:hover {

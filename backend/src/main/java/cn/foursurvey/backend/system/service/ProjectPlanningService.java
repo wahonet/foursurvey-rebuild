@@ -34,6 +34,8 @@ public class ProjectPlanningService {
                 List.of(
                         new BootstrapModule("auth", "登录与权限", "P0", "backend"),
                         new BootstrapModule("dict", "基础字典", "P0", "backend"),
+                        new BootstrapModule("menu", "导航菜单", "P0", "backend"),
+                        new BootstrapModule("org", "组织树", "P0", "backend"),
                         new BootstrapModule("init", "数据初始化", "P0", "backend/frontend"),
                         new BootstrapModule("receive", "接收移动端数据", "P0", "backend/frontend"),
                         new BootstrapModule("relic", "普查对象详情", "P0", "backend/frontend"),

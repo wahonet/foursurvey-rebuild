@@ -34,7 +34,7 @@ export async function apiRequest<T>(
   const envelope = (await response.json()) as ApiEnvelope<T>
 
   if (!response.ok || !envelope.success) {
-    throw new Error(envelope.message || '请求失败')
+    throw new Error(envelope.message || 'Request failed')
   }
 
   return envelope.data

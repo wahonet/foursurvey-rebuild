@@ -1,35 +1,39 @@
+SET NAMES utf8;
+
 USE four_survey_rebuild;
 
 INSERT INTO sys_org (
-  id, parent_id, org_code, org_name, org_type, region_code, leader_name, contact_phone, sort_no, enabled, deleted
+  id, parent_id, org_code, org_name, org_type, region_code, leader_name, contact_phone, sort_no, enabled, deleted, created_at, updated_at
 ) VALUES (
-  1, NULL, '370829', '嘉祥县普查办', 'AREA', '370829', '系统初始化', '000-00000000', 1, 1, 0
+  1, NULL, '370829', '嘉祥县普查办', 'AREA', '370829', '系统初始化', '000-00000000', 1, 1, 0, NOW(), NOW()
 )
 ON DUPLICATE KEY UPDATE
   org_name = VALUES(org_name),
   org_type = VALUES(org_type),
   region_code = VALUES(region_code),
   enabled = VALUES(enabled),
-  deleted = VALUES(deleted);
+  deleted = VALUES(deleted),
+  updated_at = NOW();
 
 INSERT INTO sys_role (
-  id, role_code, role_name, role_scope, sort_no, enabled, deleted
+  id, role_code, role_name, role_scope, sort_no, enabled, deleted, created_at, updated_at
 ) VALUES
-  (1, 'SUPER_ADMIN', '系统管理员', 'GLOBAL', 1, 1, 0),
-  (2, 'COUNTY_OPERATOR', '县级采集员', 'ORG', 2, 1, 0),
-  (3, 'COUNTY_CHECKER', '县级核查员', 'ORG', 3, 1, 0)
+  (1, 'SUPER_ADMIN', '系统管理员', 'GLOBAL', 1, 1, 0, NOW(), NOW()),
+  (2, 'COUNTY_OPERATOR', '县级采集员', 'ORG', 2, 1, 0, NOW(), NOW()),
+  (3, 'COUNTY_CHECKER', '县级核查员', 'ORG', 3, 1, 0, NOW(), NOW())
 ON DUPLICATE KEY UPDATE
   role_name = VALUES(role_name),
   role_scope = VALUES(role_scope),
   sort_no = VALUES(sort_no),
   enabled = VALUES(enabled),
-  deleted = VALUES(deleted);
+  deleted = VALUES(deleted),
+  updated_at = NOW();
 
 INSERT INTO sys_user (
-  id, org_id, username, display_name, password_hash, password_salt, mobile, email, account_status, enabled, deleted
+  id, org_id, username, display_name, password_hash, password_salt, mobile, email, account_status, enabled, deleted, created_at, updated_at
 ) VALUES (
   1, 1, 'admin', '系统管理员', 'd5cf4d455624b480e3abe59341cb8409b6f9571529603a40b976b94e502a694a',
-  '123456789abcdef01122334455667788', '13800000000', 'admin@foursurvey.local', 'ACTIVE', 1, 0
+  '123456789abcdef01122334455667788', '13800000000', 'admin@foursurvey.local', 'ACTIVE', 1, 0, NOW(), NOW()
 )
 ON DUPLICATE KEY UPDATE
   org_id = VALUES(org_id),
@@ -38,31 +42,33 @@ ON DUPLICATE KEY UPDATE
   password_salt = VALUES(password_salt),
   account_status = VALUES(account_status),
   enabled = VALUES(enabled),
-  deleted = VALUES(deleted);
+  deleted = VALUES(deleted),
+  updated_at = NOW();
 
 INSERT INTO sys_user_role (
-  user_id, role_id
+  user_id, role_id, created_at
 ) VALUES
-  (1, 1)
+  (1, 1, NOW())
 ON DUPLICATE KEY UPDATE
   role_id = VALUES(role_id);
 
 INSERT INTO base_region (
-  id, parent_id, region_code, region_name, region_level, full_name, sort_no, enabled
+  id, parent_id, region_code, region_name, region_level, full_name, sort_no, enabled, created_at, updated_at
 ) VALUES
-  (1, NULL, '370000', '山东省', 'PROVINCE', '山东省', 1, 1),
-  (2, 1, '370800', '济宁市', 'CITY', '山东省济宁市', 1, 1),
-  (3, 2, '370829', '嘉祥县', 'COUNTY', '山东省济宁市嘉祥县', 1, 1)
+  (1, NULL, '370000', '山东省', 'PROVINCE', '山东省', 1, 1, NOW(), NOW()),
+  (2, 1, '370800', '济宁市', 'CITY', '山东省济宁市', 1, 1, NOW(), NOW()),
+  (3, 2, '370829', '嘉祥县', 'COUNTY', '山东省济宁市嘉祥县', 1, 1, NOW(), NOW())
 ON DUPLICATE KEY UPDATE
   region_name = VALUES(region_name),
   region_level = VALUES(region_level),
   full_name = VALUES(full_name),
-  enabled = VALUES(enabled);
+  enabled = VALUES(enabled),
+  updated_at = NOW();
 
 INSERT INTO base_dict_item (
-  dict_type_id, item_code, item_name, item_value, sort_no, enabled
+  dict_type_id, item_code, item_name, item_value, sort_no, enabled, created_at, updated_at
 )
-SELECT t.id, seed.item_code, seed.item_name, seed.item_value, seed.sort_no, 1
+SELECT t.id, seed.item_code, seed.item_name, seed.item_value, seed.sort_no, 1, NOW(), NOW()
 FROM base_dict_type t
 JOIN (
   SELECT 'relic_category' AS dict_code, 'ANCIENT_SITE' AS item_code, '古文化遗址' AS item_name, '古文化遗址' AS item_value, 1 AS sort_no
@@ -84,6 +90,6 @@ JOIN (
 LEFT JOIN base_dict_item i ON i.dict_type_id = t.id AND i.item_code = seed.item_code
 WHERE i.id IS NULL;
 
--- 初始账号：
--- 用户名：admin
--- 密码：Admin@123456
+-- default account:
+-- username: admin
+-- password: Admin@123456

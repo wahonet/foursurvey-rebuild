@@ -95,14 +95,86 @@ type RelicItem = {
   orgName: string | null
 }
 
+type RelicPoint = {
+  id: number
+  pointType: string
+  longitude: number
+  latitude: number
+  altitude: number | null
+  coordinateSystem: string
+  sourceType: string | null
+}
+
+type RelicDetail = {
+  id: number
+  objectCode: string
+  objectName: string
+  sourceType: string
+  categoryCode: string
+  levelCode: string | null
+  surveyStatus: string
+  checkStatus: string
+  addressText: string
+  eraText: string | null
+  abstractText: string | null
+  currentUse: string | null
+  protectionScope: string | null
+  constructionControl: string | null
+  orgName: string | null
+  fillStartedAt: string | null
+  submittedAt: string | null
+  points: RelicPoint[]
+}
+
+type ReceiveBatchItem = {
+  id: number
+  batchNo: string
+  batchName: string
+  receiveSource: string
+  recordCount: number
+  receiveStatus: string
+  receiveOrgName: string | null
+  operatorName: string | null
+  receivedAt: string | null
+}
+
+type ReceiveRecord = {
+  id: number
+  recordNo: string
+  surveyType: string
+  objectName: string
+  categoryCode: string | null
+  regionCode: string | null
+  addressText: string | null
+  receiveStatus: string
+  operatorName: string | null
+  operatedAt: string | null
+}
+
+type ReceiveBatchDetail = {
+  id: number
+  batchNo: string
+  batchName: string
+  receiveSource: string
+  packageName: string | null
+  packagePath: string | null
+  recordCount: number
+  receiveStatus: string
+  receiveOrgName: string | null
+  operatorName: string | null
+  receivedAt: string | null
+  remark: string | null
+  records: ReceiveRecord[]
+}
+
 const fallbackBootstrap: BootstrapPayload = {
   project: 'FS Rebuild Console',
   currentPhase: '基础平台',
-  nextStep: '组织 / 菜单 / 对象列表骨架',
+  nextStep: '对象详情与接收批次骨架',
   docsPath: 'G:/fourSurvey/FS-doc-bundle',
   phases: [
     { key: '01', name: '基础平台', status: 'IN_PROGRESS', summary: '登录、权限、菜单、组织与基础字典' },
-    { key: '02', name: '核心建模', status: 'IN_PROGRESS', summary: '普查对象、接收批次、底账与核查任务' },
+    { key: '02', name: '核心建模', status: 'IN_PROGRESS', summary: '对象、接收批次、底账与核查任务' },
     { key: '03', name: '业务闭环', status: 'PENDING', summary: '数据初始化、接收数据、采集与核查' },
     { key: '04', name: '增强能力', status: 'PENDING', summary: '地图工作台、统计导出与报送' },
     { key: '05', name: '迁移试点', status: 'PENDING', summary: '旧库迁移、试点验收与切换' },
@@ -112,8 +184,8 @@ const fallbackBootstrap: BootstrapPayload = {
     { code: 'dict', name: '基础字典', priority: 'P0', owner: 'backend' },
     { code: 'menu', name: '导航菜单', priority: 'P0', owner: 'backend' },
     { code: 'org', name: '组织树', priority: 'P0', owner: 'backend' },
-    { code: 'relic', name: '普查对象列表', priority: 'P0', owner: 'backend/frontend' },
-    { code: 'check', name: '质量核查', priority: 'P1', owner: 'backend/frontend' },
+    { code: 'relic', name: '对象列表与详情', priority: 'P0', owner: 'backend/frontend' },
+    { code: 'receive', name: '接收批次', priority: 'P0', owner: 'backend/frontend' },
     { code: 'map', name: '地图工作台', priority: 'P1', owner: 'map' },
   ],
 }
@@ -130,6 +202,11 @@ const currentUser = ref<CurrentUserPayload | null>(null)
 const menus = ref<MenuNode[]>([])
 const orgTree = ref<OrgTreePayload>({ currentOrgId: null, nodes: [] })
 const relicItems = ref<RelicItem[]>([])
+const selectedRelicId = ref<number | null>(null)
+const selectedRelic = ref<RelicDetail | null>(null)
+const receiveBatches = ref<ReceiveBatchItem[]>([])
+const selectedBatchId = ref<number | null>(null)
+const selectedBatch = ref<ReceiveBatchDetail | null>(null)
 const relicKeyword = ref('')
 const connectionState = ref<'connecting' | 'online' | 'offline'>('connecting')
 const loginError = ref('')
@@ -145,29 +222,33 @@ function countMenus(nodes: MenuNode[]): number {
 }
 
 function phaseLabel(status: string) {
-  if (status === 'IN_PROGRESS') {
-    return '进行中'
-  }
-  if (status === 'PENDING') {
-    return '待开始'
-  }
+  if (status === 'IN_PROGRESS') return '进行中'
+  if (status === 'PENDING') return '待开始'
   return status
 }
 
-function formatSource(sourceType: string) {
+function formatSource(sourceType: string | null | undefined) {
+  if (!sourceType) return '-'
   return surveySourceItems.value.find((item) => item.itemCode === sourceType)?.itemName ?? sourceType
 }
 
-function formatStatus(status: string) {
+function formatSurveyStatus(status: string | null | undefined) {
+  if (!status) return '-'
   return surveyStatusItems.value.find((item) => item.itemCode === status)?.itemName ?? status
 }
 
-function checkStatusLabel(value: string) {
+function formatCheckStatus(value: string | null | undefined) {
+  if (!value) return '-'
   if (value === 'PENDING') return '待核查'
   if (value === 'IN_REVIEW') return '核查中'
   if (value === 'PASSED') return '已通过'
   if (value === 'REJECTED') return '已退回'
   return value
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return '-'
+  return value.replace('T', ' ').slice(0, 19)
 }
 
 async function loadBootstrap() {
@@ -210,17 +291,68 @@ async function loadRelics() {
   const keyword = relicKeyword.value.trim()
   const query = keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''
   relicItems.value = await apiRequest<RelicItem[]>(`/api/relic-objects${query}`, { method: 'GET' })
+
+  if (!relicItems.value.length) {
+    selectedRelicId.value = null
+    selectedRelic.value = null
+    return
+  }
+
+  if (selectedRelicId.value && relicItems.value.some((item) => item.id === selectedRelicId.value)) {
+    await loadRelicDetail(selectedRelicId.value)
+    return
+  }
+
+  await selectRelic(relicItems.value[0].id)
 }
 
-async function loadDashboardData() {
+async function loadRelicDetail(id: number) {
+  selectedRelic.value = await apiRequest<RelicDetail>(`/api/relic-objects/${id}`, { method: 'GET' })
+}
+
+async function selectRelic(id: number) {
+  selectedRelicId.value = id
+  await loadRelicDetail(id)
+}
+
+async function loadReceiveBatches() {
+  receiveBatches.value = await apiRequest<ReceiveBatchItem[]>('/api/receive-batches', { method: 'GET' })
+
+  if (!receiveBatches.value.length) {
+    selectedBatchId.value = null
+    selectedBatch.value = null
+    return
+  }
+
+  if (selectedBatchId.value && receiveBatches.value.some((item) => item.id === selectedBatchId.value)) {
+    await loadReceiveBatchDetail(selectedBatchId.value)
+    return
+  }
+
+  await selectBatch(receiveBatches.value[0].id)
+}
+
+async function loadReceiveBatchDetail(id: number) {
+  selectedBatch.value = await apiRequest<ReceiveBatchDetail>(`/api/receive-batches/${id}`, {
+    method: 'GET',
+  })
+}
+
+async function selectBatch(id: number) {
+  selectedBatchId.value = id
+  await loadReceiveBatchDetail(id)
+}
+
+async function loadWorkspaceData() {
   dashboardLoading.value = true
   pageError.value = ''
+
   try {
-    await Promise.all([loadCurrentUser(), loadDicts(), loadMenus(), loadOrgTree(), loadRelics()])
+    await Promise.all([loadCurrentUser(), loadDicts(), loadMenus(), loadOrgTree()])
+    await Promise.all([loadRelics(), loadReceiveBatches()])
     connectionState.value = 'online'
   } catch (error) {
-    pageError.value =
-      error instanceof Error ? error.message : '工作台加载失败'
+    pageError.value = error instanceof Error ? error.message : '工作台加载失败'
     throw error
   } finally {
     dashboardLoading.value = false
@@ -229,18 +361,21 @@ async function loadDashboardData() {
 
 async function restoreSession() {
   const token = localStorage.getItem('four-survey-token')
-  if (!token) {
-    return
-  }
+  if (!token) return
 
   try {
-    await loadDashboardData()
+    await loadWorkspaceData()
   } catch {
     localStorage.removeItem('four-survey-token')
     currentUser.value = null
     menus.value = []
     orgTree.value = { currentOrgId: null, nodes: [] }
     relicItems.value = []
+    selectedRelicId.value = null
+    selectedRelic.value = null
+    receiveBatches.value = []
+    selectedBatchId.value = null
+    selectedBatch.value = null
   }
 }
 
@@ -252,19 +387,14 @@ async function submitLogin() {
     const result = await apiRequest<LoginResponse>('/api/auth/login', {
       method: 'POST',
       authenticated: false,
-      body: JSON.stringify({
-        username: loginForm.username,
-        password: loginForm.password,
-      }),
+      body: JSON.stringify(loginForm),
     })
 
     localStorage.setItem('four-survey-token', result.accessToken)
     currentUser.value = result.user
-    await Promise.all([loadDicts(), loadMenus(), loadOrgTree(), loadRelics()])
-    connectionState.value = 'online'
+    await loadWorkspaceData()
   } catch (error) {
-    loginError.value =
-      error instanceof Error ? error.message : '登录失败，请检查后端服务或账号数据'
+    loginError.value = error instanceof Error ? error.message : '登录失败，请检查账号和后端服务'
   } finally {
     loginLoading.value = false
   }
@@ -276,6 +406,11 @@ function logout() {
   menus.value = []
   orgTree.value = { currentOrgId: null, nodes: [] }
   relicItems.value = []
+  selectedRelicId.value = null
+  selectedRelic.value = null
+  receiveBatches.value = []
+  selectedBatchId.value = null
+  selectedBatch.value = null
   surveyStatusItems.value = []
   surveySourceItems.value = []
 }
@@ -350,7 +485,8 @@ onMounted(async () => {
             <p class="eyebrow">项目状态</p>
             <h2>{{ bootstrap.project }}</h2>
             <p class="summary">
-              当前已经完成登录、字典、菜单、组织树和对象列表骨架。下一步会继续往详情页、接收批次和核查任务推进。
+              现在已经具备登录、菜单、组织树、对象列表、对象详情、接收批次和接收记录骨架。
+              下一步可以直接进入对象编辑表单和接收数据处理流程。
             </p>
             <p v-if="pageError" class="error-text">{{ pageError }}</p>
           </div>
@@ -360,12 +496,12 @@ onMounted(async () => {
               <strong>{{ totalMenuCount }}</strong>
             </div>
             <div class="metric">
-              <span class="metric-label">组织根节点</span>
-              <strong>{{ orgTree.nodes.length }}</strong>
-            </div>
-            <div class="metric">
               <span class="metric-label">对象样例</span>
               <strong>{{ relicItems.length }}</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">接收批次</span>
+              <strong>{{ receiveBatches.length }}</strong>
             </div>
           </div>
         </section>
@@ -416,53 +552,283 @@ onMounted(async () => {
           </section>
         </section>
 
-        <section class="panel">
-          <div class="panel-header">
-            <h2>对象列表示例</h2>
-            <div class="toolbar">
-              <input
-                v-model.trim="relicKeyword"
-                type="text"
-                placeholder="按编号或名称搜索"
-                @keyup.enter="loadRelics"
-              />
-              <button class="primary-button small" type="button" @click="loadRelics" :disabled="dashboardLoading">
-                查询
-              </button>
+        <section class="workspace-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>对象列表</h2>
+              <div class="toolbar">
+                <input
+                  v-model.trim="relicKeyword"
+                  type="text"
+                  placeholder="按编号或名称搜索"
+                  @keyup.enter="loadRelics"
+                />
+                <button class="primary-button small" type="button" @click="loadRelics" :disabled="dashboardLoading">
+                  查询
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div class="table-shell">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>编号</th>
-                  <th>名称</th>
-                  <th>来源</th>
-                  <th>类别</th>
-                  <th>普查状态</th>
-                  <th>核查状态</th>
-                  <th>所属组织</th>
-                  <th>地址</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in relicItems" :key="item.id">
-                  <td>{{ item.objectCode }}</td>
-                  <td>{{ item.objectName }}</td>
-                  <td>{{ formatSource(item.sourceType) }}</td>
-                  <td>{{ item.categoryCode }}</td>
-                  <td>{{ formatStatus(item.surveyStatus) }}</td>
-                  <td>{{ checkStatusLabel(item.checkStatus) }}</td>
-                  <td>{{ item.orgName || '-' }}</td>
-                  <td>{{ item.addressText }}</td>
-                </tr>
-                <tr v-if="!relicItems.length">
-                  <td colspan="8" class="empty-cell">暂无数据</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <div class="table-shell">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>编号</th>
+                    <th>名称</th>
+                    <th>来源</th>
+                    <th>类别</th>
+                    <th>普查状态</th>
+                    <th>核查状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="item in relicItems"
+                    :key="item.id"
+                    class="clickable-row"
+                    :class="{ active: item.id === selectedRelicId }"
+                    @click="selectRelic(item.id)"
+                  >
+                    <td>{{ item.objectCode }}</td>
+                    <td>{{ item.objectName }}</td>
+                    <td>{{ formatSource(item.sourceType) }}</td>
+                    <td>{{ item.categoryCode }}</td>
+                    <td>{{ formatSurveyStatus(item.surveyStatus) }}</td>
+                    <td>{{ formatCheckStatus(item.checkStatus) }}</td>
+                  </tr>
+                  <tr v-if="!relicItems.length">
+                    <td colspan="6" class="empty-cell">暂无数据</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>对象详情</h2>
+              <span class="hint">{{ selectedRelic?.objectCode || '未选中对象' }}</span>
+            </div>
+
+            <div v-if="selectedRelic" class="detail-stack">
+              <div class="detail-card">
+                <div class="detail-title-row">
+                  <div>
+                    <p class="eyebrow">基本信息</p>
+                    <h3>{{ selectedRelic.objectName }}</h3>
+                  </div>
+                  <div class="badge-group">
+                    <span class="detail-badge">{{ formatSurveyStatus(selectedRelic.surveyStatus) }}</span>
+                    <span class="detail-badge muted">{{ formatCheckStatus(selectedRelic.checkStatus) }}</span>
+                  </div>
+                </div>
+
+                <div class="detail-grid">
+                  <div>
+                    <span class="detail-label">来源</span>
+                    <strong>{{ formatSource(selectedRelic.sourceType) }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">类别</span>
+                    <strong>{{ selectedRelic.categoryCode || '-' }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">组织</span>
+                    <strong>{{ selectedRelic.orgName || '-' }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">年代</span>
+                    <strong>{{ selectedRelic.eraText || '-' }}</strong>
+                  </div>
+                  <div class="wide">
+                    <span class="detail-label">地址</span>
+                    <strong>{{ selectedRelic.addressText || '-' }}</strong>
+                  </div>
+                  <div class="wide">
+                    <span class="detail-label">现状用途</span>
+                    <strong>{{ selectedRelic.currentUse || '-' }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <p class="eyebrow">说明</p>
+                <p class="detail-text">{{ selectedRelic.abstractText || '暂无简介' }}</p>
+                <div class="detail-list">
+                  <div>
+                    <span class="detail-label">保护范围</span>
+                    <strong>{{ selectedRelic.protectionScope || '-' }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">建设控制地带</span>
+                    <strong>{{ selectedRelic.constructionControl || '-' }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">开始填报</span>
+                    <strong>{{ formatDateTime(selectedRelic.fillStartedAt) }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">提交时间</span>
+                    <strong>{{ formatDateTime(selectedRelic.submittedAt) }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-card">
+                <div class="panel-header compact">
+                  <h3>点位信息</h3>
+                  <span class="hint">{{ selectedRelic.points.length }} 个点</span>
+                </div>
+                <div v-if="selectedRelic.points.length" class="point-list">
+                  <div v-for="point in selectedRelic.points" :key="point.id" class="point-item">
+                    <div>
+                      <span class="detail-label">点位类型</span>
+                      <strong>{{ point.pointType }}</strong>
+                    </div>
+                    <div>
+                      <span class="detail-label">经纬度</span>
+                      <strong>{{ point.longitude }}, {{ point.latitude }}</strong>
+                    </div>
+                    <div>
+                      <span class="detail-label">高程</span>
+                      <strong>{{ point.altitude ?? '-' }}</strong>
+                    </div>
+                    <div>
+                      <span class="detail-label">坐标系</span>
+                      <strong>{{ point.coordinateSystem }}</strong>
+                    </div>
+                  </div>
+                </div>
+                <p v-else class="empty-inline">暂无点位数据</p>
+              </div>
+            </div>
+
+            <div v-else class="empty-state">先从左侧列表选择一个对象</div>
+          </section>
+        </section>
+
+        <section class="workspace-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>接收批次</h2>
+              <span class="hint">最近 {{ receiveBatches.length }} 个批次</span>
+            </div>
+
+            <div class="table-shell">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>批次号</th>
+                    <th>批次名称</th>
+                    <th>状态</th>
+                    <th>记录数</th>
+                    <th>接收时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="batch in receiveBatches"
+                    :key="batch.id"
+                    class="clickable-row"
+                    :class="{ active: batch.id === selectedBatchId }"
+                    @click="selectBatch(batch.id)"
+                  >
+                    <td>{{ batch.batchNo }}</td>
+                    <td>{{ batch.batchName }}</td>
+                    <td>{{ batch.receiveStatus }}</td>
+                    <td>{{ batch.recordCount }}</td>
+                    <td>{{ formatDateTime(batch.receivedAt) }}</td>
+                  </tr>
+                  <tr v-if="!receiveBatches.length">
+                    <td colspan="5" class="empty-cell">暂无批次数据</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>批次详情</h2>
+              <span class="hint">{{ selectedBatch?.batchNo || '未选中批次' }}</span>
+            </div>
+
+            <div v-if="selectedBatch" class="detail-stack">
+              <div class="detail-card">
+                <div class="detail-title-row">
+                  <div>
+                    <p class="eyebrow">批次信息</p>
+                    <h3>{{ selectedBatch.batchName }}</h3>
+                  </div>
+                  <div class="badge-group">
+                    <span class="detail-badge">{{ selectedBatch.receiveStatus }}</span>
+                    <span class="detail-badge muted">{{ selectedBatch.recordCount }} 条</span>
+                  </div>
+                </div>
+                <div class="detail-grid">
+                  <div>
+                    <span class="detail-label">批次号</span>
+                    <strong>{{ selectedBatch.batchNo }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">来源</span>
+                    <strong>{{ selectedBatch.receiveSource }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">接收组织</span>
+                    <strong>{{ selectedBatch.receiveOrgName || '-' }}</strong>
+                  </div>
+                  <div>
+                    <span class="detail-label">操作人</span>
+                    <strong>{{ selectedBatch.operatorName || '-' }}</strong>
+                  </div>
+                  <div class="wide">
+                    <span class="detail-label">包文件</span>
+                    <strong>{{ selectedBatch.packageName || '-' }}</strong>
+                  </div>
+                  <div class="wide">
+                    <span class="detail-label">包路径</span>
+                    <strong>{{ selectedBatch.packagePath || '-' }}</strong>
+                  </div>
+                </div>
+                <p class="detail-note">{{ selectedBatch.remark || '暂无备注' }}</p>
+              </div>
+
+              <div class="detail-card">
+                <div class="panel-header compact">
+                  <h3>接收记录</h3>
+                  <span class="hint">{{ selectedBatch.records.length }} 条</span>
+                </div>
+                <div class="table-shell nested">
+                  <table class="data-table compact-table">
+                    <thead>
+                      <tr>
+                        <th>记录号</th>
+                        <th>名称</th>
+                        <th>调查类型</th>
+                        <th>状态</th>
+                        <th>操作人</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="record in selectedBatch.records" :key="record.id">
+                        <td>{{ record.recordNo || '-' }}</td>
+                        <td>{{ record.objectName }}</td>
+                        <td>{{ formatSource(record.surveyType) }}</td>
+                        <td>{{ record.receiveStatus }}</td>
+                        <td>{{ record.operatorName || '-' }}</td>
+                      </tr>
+                      <tr v-if="!selectedBatch.records.length">
+                        <td colspan="5" class="empty-cell">暂无接收记录</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="empty-state">先从左侧列表选择一个批次</div>
+          </section>
         </section>
 
         <section class="grid-two">
@@ -478,24 +844,27 @@ onMounted(async () => {
               <li>`GET /api/menus/current` 当前用户菜单树</li>
               <li>`GET /api/orgs/tree` 组织树</li>
               <li>`GET /api/relic-objects` 对象列表</li>
+              <li>`GET /api/relic-objects/:id` 对象详情</li>
+              <li>`GET /api/receive-batches` 接收批次列表</li>
+              <li>`GET /api/receive-batches/:id` 接收批次详情</li>
             </ul>
           </section>
 
           <section class="panel">
             <div class="panel-header">
-              <h2>当前 SQL 输出</h2>
+              <h2>当前输出</h2>
             </div>
             <div class="path-block">
-              <code>sql/schema/003_navigation.sql</code>
-              <p>菜单和角色菜单关联表。</p>
+              <code>backend/relic</code>
+              <p>对象列表、对象详情、点位详情接口与服务。</p>
+            </div>
+            <div class="path-block">
+              <code>backend/receive</code>
+              <p>接收批次、接收记录的最小骨架。</p>
             </div>
             <div class="path-block">
               <code>sql/seed/002_menu_and_sample_data.sql</code>
-              <p>首批菜单和对象样例数据。</p>
-            </div>
-            <div class="path-block">
-              <code>backend/menu / backend/org / backend/relic</code>
-              <p>菜单、组织、对象列表的最小服务骨架。</p>
+              <p>对象点位、接收批次和接收记录样例数据。</p>
             </div>
           </section>
         </section>
@@ -538,7 +907,6 @@ onMounted(async () => {
             </label>
 
             <p class="login-hint">当前种子数据默认账号：`admin` / `Admin@123456`</p>
-
             <p v-if="loginError" class="error-text">{{ loginError }}</p>
 
             <button class="primary-button" type="submit" :disabled="loginLoading || dashboardLoading">
@@ -563,28 +931,26 @@ onMounted(async () => {
             </div>
             <div class="metric">
               <span class="metric-label">当前目标</span>
-              <strong>菜单、组织树、对象列表</strong>
+              <strong>对象详情与接收批次</strong>
             </div>
           </section>
 
           <section class="panel inset-panel">
             <div class="panel-header">
-              <h2>复刻路线预览</h2>
+              <h2>当前模块</h2>
             </div>
-            <ol class="phase-list">
-              <li v-for="phase in bootstrap.phases" :key="phase.key">
-                <div class="phase-index">{{ phase.key }}</div>
-                <div class="phase-body">
-                  <div class="phase-title-row">
-                    <strong>{{ phase.name }}</strong>
-                    <span class="phase-status" :class="{ pending: phase.status === 'PENDING' }">
-                      {{ phaseLabel(phase.status) }}
-                    </span>
-                  </div>
-                  <p>{{ phase.summary }}</p>
-                </div>
-              </li>
-            </ol>
+            <div class="module-table">
+              <div class="module-row module-head">
+                <span>模块</span>
+                <span>归属</span>
+                <span>优先级</span>
+              </div>
+              <div v-for="module in bootstrap.modules" :key="module.code" class="module-row">
+                <span>{{ module.name }}</span>
+                <span>{{ module.owner }}</span>
+                <span class="priority-chip">{{ module.priority }}</span>
+              </div>
+            </div>
           </section>
         </section>
       </main>

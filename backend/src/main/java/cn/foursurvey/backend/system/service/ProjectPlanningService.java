@@ -23,7 +23,7 @@ public class ProjectPlanningService {
         return new BootstrapPayload(
                 projectName,
                 currentPhase,
-                "首批核心数据模型与建表草案",
+                "对象详情与接收批次骨架",
                 docsPath,
                 List.of(
                         new BootstrapPhase("01", "基础平台", "IN_PROGRESS", "登录、权限、菜单、组织与基础字典"),

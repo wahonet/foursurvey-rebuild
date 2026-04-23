@@ -71,3 +71,65 @@ ON DUPLICATE KEY UPDATE
   abstract_text = VALUES(abstract_text),
   current_use = VALUES(current_use),
   updated_at = NOW();
+
+INSERT INTO fs_relic_point (
+  id, relic_object_id, point_type, longitude, latitude, altitude, coordinate_system, source_type, created_at, updated_at
+) VALUES
+  (1, 1, 'MAIN', 116.34461400, 35.34019400, 56.20, 'CGCS2000', 'THIRD_CENSUS', NOW(), NOW()),
+  (2, 2, 'MAIN', 116.35671100, 35.33796200, 58.10, 'CGCS2000', 'NEW_DISCOVERY', NOW(), NOW()),
+  (3, 3, 'MAIN', 116.32981400, 35.34122900, 54.70, 'CGCS2000', 'CHANGE', NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  longitude = VALUES(longitude),
+  latitude = VALUES(latitude),
+  altitude = VALUES(altitude),
+  coordinate_system = VALUES(coordinate_system),
+  source_type = VALUES(source_type),
+  updated_at = NOW();
+
+INSERT INTO fs_receive_batch (
+  id, batch_no, batch_name, receive_source, package_name, package_path, record_count, receive_status,
+  receive_org_id, operator_id, received_at, remark, created_at, updated_at
+) VALUES
+  (1, 'RB-20260423-001', '4月外业回传批次一', 'MOBILE', 'rb-20260423-001.zip',
+   'G:/fourSurvey/packages/rb-20260423-001.zip', 2, 'IMPORTED', 1, 1, NOW(),
+   '示例接收批次，用于前端详情联调。', NOW(), NOW()),
+  (2, 'RB-20260423-002', '4月外业回传批次二', 'MOBILE', 'rb-20260423-002.zip',
+   'G:/fourSurvey/packages/rb-20260423-002.zip', 1, 'IMPORTED', 1, 1, NOW(),
+   '示例接收批次，用于展示多批次列表。', NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  batch_name = VALUES(batch_name),
+  package_name = VALUES(package_name),
+  package_path = VALUES(package_path),
+  record_count = VALUES(record_count),
+  receive_status = VALUES(receive_status),
+  receive_org_id = VALUES(receive_org_id),
+  operator_id = VALUES(operator_id),
+  received_at = VALUES(received_at),
+  remark = VALUES(remark),
+  updated_at = NOW();
+
+INSERT INTO fs_receive_record (
+  id, batch_id, record_no, survey_type, object_name, category_code, region_code, address_text,
+  receive_status, operator_name, operated_at, source_payload, created_at, updated_at
+) VALUES
+  (1, 1, 'RR-001', 'NEW_DISCOVERY', '北李楼村观音堂', 'ANCIENT_BUILDING', '370829',
+   '山东省济宁市嘉祥县仲山镇', 'IMPORTED', '系统管理员', NOW(),
+   '{\"source\":\"mobile\",\"device\":\"android\"}', NOW(), NOW()),
+  (2, 1, 'RR-002', 'CHANGE', '张攀柱墓碑', 'MODERN_HISTORIC', '370829',
+   '山东省济宁市嘉祥县布山村', 'IMPORTED', '系统管理员', NOW(),
+   '{\"source\":\"mobile\",\"device\":\"android\"}', NOW(), NOW()),
+  (3, 2, 'RR-003', 'THIRD_CENSUS', '曾庙碑', 'GROTTO_CARVING', '370829',
+   '山东省济宁市嘉祥县', 'IMPORTED', '系统管理员', NOW(),
+   '{\"source\":\"mobile\",\"device\":\"android\"}', NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  batch_id = VALUES(batch_id),
+  survey_type = VALUES(survey_type),
+  object_name = VALUES(object_name),
+  category_code = VALUES(category_code),
+  region_code = VALUES(region_code),
+  address_text = VALUES(address_text),
+  receive_status = VALUES(receive_status),
+  operator_name = VALUES(operator_name),
+  operated_at = VALUES(operated_at),
+  source_payload = VALUES(source_payload),
+  updated_at = NOW();

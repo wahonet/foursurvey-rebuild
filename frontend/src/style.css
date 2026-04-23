@@ -620,3 +620,161 @@ code {
   border: none;
   background: transparent;
 }
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clickable-row.active {
+  background: #eef5fd;
+  box-shadow: inset 3px 0 0 #1e62b3;
+}
+
+.detail-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f9fbfd;
+  padding: 18px;
+}
+
+.detail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.detail-title-row h3,
+.panel-header h3 {
+  margin: 0;
+}
+
+.badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #dff0ff;
+  color: #0d4e89;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.detail-badge.muted {
+  background: #edf2f7;
+  color: #516173;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.detail-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.detail-grid strong,
+.detail-list strong,
+.point-item strong {
+  color: #12263f;
+  word-break: break-word;
+}
+
+.detail-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #6d7d8d;
+}
+
+.detail-text,
+.detail-note {
+  margin: 0;
+  color: #4f5f70;
+  white-space: pre-wrap;
+}
+
+.detail-note {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px dashed #d9e3ed;
+}
+
+.detail-list {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.point-list {
+  display: grid;
+  gap: 12px;
+}
+
+.point-item {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.empty-inline,
+.empty-state {
+  margin: 0;
+  color: #718193;
+}
+
+.empty-state {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #d7e2ec;
+  border-radius: 8px;
+  background: #f9fbfd;
+}
+
+.panel-header.compact {
+  margin-bottom: 12px;
+}
+
+.table-shell.nested {
+  background: #ffffff;
+}
+
+.compact-table {
+  min-width: 100%;
+}
+
+.compact-table th,
+.compact-table td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}

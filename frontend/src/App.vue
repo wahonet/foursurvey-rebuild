@@ -243,6 +243,49 @@ type RelationRow = {
   noteText: string
 }
 
+type SpecimenRow = {
+  order: number
+  sampleType: string
+  name: string
+  code: string
+  quantityText: string
+  materialText: string
+  keeperText: string
+  noteText: string
+}
+
+type OtherMaterialRow = {
+  order: number
+  materialType: string
+  title: string
+  carrierType: string
+  formedAt: string
+  keeperText: string
+  noteText: string
+}
+
+type DrawingRow = {
+  order: number
+  drawingType: string
+  name: string
+  scaleText: string
+  sheetSize: string
+  author: string
+  formedAt: string
+  noteText: string
+}
+
+type VectorRow = {
+  order: number
+  graphType: string
+  name: string
+  coordinateSystem: string
+  layerName: string
+  pointCount: string
+  updatedAt: string
+  noteText: string
+}
+
 type ShellNavChild = {
   id: string
   key: MenuKey
@@ -942,6 +985,108 @@ const topicRows = computed<RelationRow[]>(() => [
     noteText: '用于专题关联展示。',
   },
 ])
+
+const specimenRows = computed<SpecimenRow[]>(() => {
+  const name = selectedRelic.value?.objectName || '示例文物点'
+  return [
+    {
+      order: 1,
+      sampleType: '土样',
+      name: `${name}桥面铺装样本`,
+      code: 'YB-2026-001',
+      quantityText: '1 份',
+      materialText: '砂土',
+      keeperText: '样本柜 A-01',
+      noteText: '用于记录桥面铺装土层结构。',
+    },
+    {
+      order: 2,
+      sampleType: '石质样本',
+      name: `${name}桥身石材样本`,
+      code: 'YB-2026-002',
+      quantityText: '2 块',
+      materialText: '青石',
+      keeperText: '样本柜 A-02',
+      noteText: '用于比对桥身主体石材风化情况。',
+    },
+  ]
+})
+
+const otherMaterialRows = computed<OtherMaterialRow[]>(() => {
+  const name = selectedRelic.value?.objectName || '示例文物点'
+  return [
+    {
+      order: 1,
+      materialType: '调查记录',
+      title: `${name}现场调查笔记`,
+      carrierType: '纸质',
+      formedAt: '2026.04.11',
+      keeperText: '资料柜 B-01',
+      noteText: '整理现场踏勘记录和访谈摘要。',
+    },
+    {
+      order: 2,
+      materialType: '历史资料',
+      title: `${name}相关历史文献摘录`,
+      carrierType: '电子文档',
+      formedAt: '2026.04.12',
+      keeperText: '资料柜 B-03',
+      noteText: '用于补充年代与使用沿革说明。',
+    },
+  ]
+})
+
+const drawingRows = computed<DrawingRow[]>(() => {
+  const name = selectedRelic.value?.objectName || '示例文物点'
+  return [
+    {
+      order: 1,
+      drawingType: '平面图',
+      name: `${name}总平面图`,
+      scaleText: '1:200',
+      sheetSize: 'A3',
+      author: '制图员',
+      formedAt: '2026.04.13',
+      noteText: '用于展示对象整体位置关系。',
+    },
+    {
+      order: 2,
+      drawingType: '立面图',
+      name: `${name}桥身立面图`,
+      scaleText: '1:100',
+      sheetSize: 'A3',
+      author: '制图员',
+      formedAt: '2026.04.13',
+      noteText: '用于展示桥身保存现状与结构特征。',
+    },
+  ]
+})
+
+const vectorRows = computed<VectorRow[]>(() => {
+  const name = selectedRelic.value?.objectName || '示例文物点'
+  return [
+    {
+      order: 1,
+      graphType: '点',
+      name: `${name}中心点`,
+      coordinateSystem: 'CGCS2000',
+      layerName: '文物点位',
+      pointCount: '1',
+      updatedAt: '2026.04.11 10:24',
+      noteText: '主点位数据，用于地图定位。',
+    },
+    {
+      order: 2,
+      graphType: '面',
+      name: `${name}保护范围`,
+      coordinateSystem: 'CGCS2000',
+      layerName: '保护范围',
+      pointCount: '10',
+      updatedAt: '2026.04.11 10:31',
+      noteText: '由本体边界坐标生成的范围面。',
+    },
+  ]
+})
 
 const photoRows = computed<PhotoRow[]>(() => {
   const name = selectedRelic.value?.objectName || '示例文物点'
@@ -1991,6 +2136,121 @@ onMounted(async () => {
                 </div>
               </div>
 
+              <div v-else-if="selectedDetailSection === 'specimen'" class="sheet-panel sheet-panel--list">
+                <table class="list-table detail-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>标本类型</th>
+                      <th>名称</th>
+                      <th>编号</th>
+                      <th>数量</th>
+                      <th>材质</th>
+                      <th>保管位置</th>
+                      <th>备注</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in specimenRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.sampleType }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.code }}</td>
+                      <td>{{ row.quantityText }}</td>
+                      <td>{{ row.materialText }}</td>
+                      <td>{{ row.keeperText }}</td>
+                      <td>{{ row.noteText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ specimenRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="selectedDetailSection === 'other'" class="sheet-panel sheet-panel--list">
+                <table class="list-table detail-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>资料类型</th>
+                      <th>题名</th>
+                      <th>载体类型</th>
+                      <th>形成时间</th>
+                      <th>保管位置</th>
+                      <th>说明</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in otherMaterialRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.materialType }}</td>
+                      <td>{{ row.title }}</td>
+                      <td>{{ row.carrierType }}</td>
+                      <td>{{ row.formedAt }}</td>
+                      <td>{{ row.keeperText }}</td>
+                      <td>{{ row.noteText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ otherMaterialRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="selectedDetailSection === 'drawing'" class="sheet-panel sheet-panel--list">
+                <table class="list-table detail-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>图纸类型</th>
+                      <th>名称</th>
+                      <th>比例尺</th>
+                      <th>图幅</th>
+                      <th>制图人</th>
+                      <th>形成时间</th>
+                      <th>备注</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in drawingRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.drawingType }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.scaleText }}</td>
+                      <td>{{ row.sheetSize }}</td>
+                      <td>{{ row.author }}</td>
+                      <td>{{ row.formedAt }}</td>
+                      <td>{{ row.noteText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ drawingRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
               <div v-else-if="selectedDetailSection === 'photo'" class="sheet-panel sheet-panel--list">
                 <table class="list-table detail-table">
                   <thead>
@@ -2027,6 +2287,49 @@ onMounted(async () => {
 
                 <div class="detail-table-footer">
                   <span>共 {{ photoRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="selectedDetailSection === 'vector'" class="sheet-panel sheet-panel--list">
+                <div class="detail-table-toolbar">
+                  <button type="button" class="toolbar-button primary">查看矢量图</button>
+                </div>
+
+                <table class="list-table detail-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>图形类型</th>
+                      <th>名称</th>
+                      <th>坐标系统</th>
+                      <th>图层名称</th>
+                      <th>点位数</th>
+                      <th>更新时间</th>
+                      <th>备注</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in vectorRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.graphType }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.coordinateSystem }}</td>
+                      <td>{{ row.layerName }}</td>
+                      <td>{{ row.pointCount }}</td>
+                      <td>{{ row.updatedAt }}</td>
+                      <td>{{ row.noteText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ vectorRows.length }} 条</span>
                   <div class="pager">
                     <button type="button">上一页</button>
                     <button type="button" class="is-active">1</button>

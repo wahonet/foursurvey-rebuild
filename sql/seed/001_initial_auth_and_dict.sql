@@ -90,6 +90,4 @@ JOIN (
 LEFT JOIN base_dict_item i ON i.dict_type_id = t.id AND i.item_code = seed.item_code
 WHERE i.id IS NULL;
 
--- default account:
--- username: admin
--- password: Admin@123456
+-- default account is created by seed data for local development only.

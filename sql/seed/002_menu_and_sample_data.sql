@@ -52,12 +52,12 @@ INSERT INTO fs_relic_object (
   id, object_code, object_name, source_type, org_id, region_code, category_code, level_code,
   survey_status, check_status, address_text, era_text, abstract_text, current_use, created_at, updated_at
 ) VALUES
-  (1, 'FS-370829-0001', '曾庙碑', 'THIRD_CENSUS', 1, '370829', 'GROTTO_CARVING', NULL, 'DONE', 'PASSED',
-   '山东省济宁市嘉祥县', '清', '示例对象，用于列表骨架联调。', '展示', NOW(), NOW()),
-  (2, 'FS-370829-0002', '北李楼村观音堂', 'NEW_DISCOVERY', 1, '370829', 'ANCIENT_BUILDING', NULL, 'IN_PROGRESS', 'IN_REVIEW',
-   '山东省济宁市嘉祥县仲山镇', '不详', '示例对象，用于接下一步详情页。', '闲置', NOW(), NOW()),
-  (3, 'FS-370829-0003', '张攀柱墓碑', 'CHANGE', 1, '370829', 'MODERN_HISTORIC', NULL, 'TO_DO', 'PENDING',
-   '山东省济宁市嘉祥县布山村', '民国', '示例对象，用于核查与流程状态展示。', '待核实', NOW(), NOW())
+  (1, 'FS-370829-0001', '示例石刻点', 'THIRD_CENSUS', 1, '370829', 'GROTTO_CARVING', NULL, 'DONE', 'PASSED',
+   '示例区域一', '清', '示例对象，用于列表骨架联调。', '展示', NOW(), NOW()),
+  (2, 'FS-370829-0002', '示例古建筑点', 'NEW_DISCOVERY', 1, '370829', 'ANCIENT_BUILDING', NULL, 'IN_PROGRESS', 'IN_REVIEW',
+   '示例区域二', '不详', '示例对象，用于接下一步详情页。', '闲置', NOW(), NOW()),
+  (3, 'FS-370829-0003', '示例近现代建筑点', 'CHANGE', 1, '370829', 'MODERN_HISTORIC', NULL, 'TO_DO', 'PENDING',
+   '示例区域三', '民国', '示例对象，用于核查与流程状态展示。', '待核实', NOW(), NOW())
 ON DUPLICATE KEY UPDATE
   object_name = VALUES(object_name),
   source_type = VALUES(source_type),
@@ -112,14 +112,14 @@ INSERT INTO fs_receive_record (
   id, batch_id, record_no, survey_type, object_name, category_code, region_code, address_text,
   receive_status, operator_name, operated_at, source_payload, created_at, updated_at
 ) VALUES
-  (1, 1, 'RR-001', 'NEW_DISCOVERY', '北李楼村观音堂', 'ANCIENT_BUILDING', '370829',
-   '山东省济宁市嘉祥县仲山镇', 'IMPORTED', '系统管理员', NOW(),
+  (1, 1, 'RR-001', 'NEW_DISCOVERY', '示例古建筑点', 'ANCIENT_BUILDING', '370829',
+   '示例区域二', 'IMPORTED', '系统用户', NOW(),
    '{\"source\":\"mobile\",\"device\":\"android\"}', NOW(), NOW()),
-  (2, 1, 'RR-002', 'CHANGE', '张攀柱墓碑', 'MODERN_HISTORIC', '370829',
-   '山东省济宁市嘉祥县布山村', 'IMPORTED', '系统管理员', NOW(),
+  (2, 1, 'RR-002', 'CHANGE', '示例近现代建筑点', 'MODERN_HISTORIC', '370829',
+   '示例区域三', 'IMPORTED', '系统用户', NOW(),
    '{\"source\":\"mobile\",\"device\":\"android\"}', NOW(), NOW()),
-  (3, 2, 'RR-003', 'THIRD_CENSUS', '曾庙碑', 'GROTTO_CARVING', '370829',
-   '山东省济宁市嘉祥县', 'IMPORTED', '系统管理员', NOW(),
+  (3, 2, 'RR-003', 'THIRD_CENSUS', '示例石刻点', 'GROTTO_CARVING', '370829',
+   '示例区域一', 'IMPORTED', '系统用户', NOW(),
    '{\"source\":\"mobile\",\"device\":\"android\"}', NOW(), NOW())
 ON DUPLICATE KEY UPDATE
   batch_id = VALUES(batch_id),

@@ -261,8 +261,8 @@ const detailNavNodes: DetailNavNode[] = [
 ]
 
 const loginForm = reactive({
-  username: 'admin',
-  password: 'Admin@123456',
+  username: '',
+  password: '',
 })
 
 const relicForm = reactive<RelicUpdatePayload>({
@@ -718,7 +718,7 @@ function createBoundaryRows(detail: RelicDetail | null): BoundaryRow[] {
     longitudeText: decimalToDms(baseLongitude + lngOffset),
     altitudeText: `${altitude.toFixed(2)}米`,
     noteText: noteTexts[index],
-    remarkText: index === 0 ? `${detail.addressText || '土山桥村村北'}，${detail.objectName}` : '无',
+    remarkText: index === 0 ? '示例点位说明' : '无',
   }))
 }
 
@@ -738,7 +738,7 @@ const bodyRows = computed(() => {
 const boundaryRows = computed(() => createBoundaryRows(selectedRelic.value))
 
 const photoRows = computed<PhotoRow[]>(() => {
-  const name = selectedRelic.value?.objectName || '土山桥'
+  const name = selectedRelic.value?.objectName || '示例文物点'
   return [
     {
       order: 1,
@@ -748,10 +748,10 @@ const photoRows = computed<PhotoRow[]>(() => {
       code: 'Z00001',
       photoNo: 'Z001',
       filmNo: '',
-      photographer: '汪源',
+      photographer: '采集员',
       shotAt: '2025.04.11',
       direction: '由东向西',
-      note: '可见近年维修牌坊与栏杆',
+      note: '示例照片说明一',
     },
     {
       order: 2,
@@ -761,10 +761,10 @@ const photoRows = computed<PhotoRow[]>(() => {
       code: 'Z00002',
       photoNo: 'Z002',
       filmNo: '',
-      photographer: '汪源',
+      photographer: '采集员',
       shotAt: '2025.04.11',
       direction: '由东北向西南',
-      note: '明代桥身（北侧）',
+      note: '示例照片说明二',
     },
     {
       order: 3,
@@ -774,10 +774,10 @@ const photoRows = computed<PhotoRow[]>(() => {
       code: 'Z00003',
       photoNo: 'Z003',
       filmNo: '',
-      photographer: '汪源',
+      photographer: '采集员',
       shotAt: '2025.04.11',
       direction: '由东向西',
-      note: '桥面，据当地村民说为明代原始桥面',
+      note: '示例照片说明三',
     },
     {
       order: 4,
@@ -787,23 +787,23 @@ const photoRows = computed<PhotoRow[]>(() => {
       code: 'Z00004',
       photoNo: 'Z004',
       filmNo: '',
-      photographer: '汪源',
+      photographer: '采集员',
       shotAt: '2025.04.11',
       direction: '由西南向东北',
-      note: '明代桥洞',
+      note: '示例照片说明四',
     },
     {
       order: 5,
       thumb: buildPhotoThumb(4, `${name}记石`),
       relatedType: '文物构成-附属文物',
-      name: `创修嘉祥县${name}记`,
+      name: '示例附属构件',
       code: 'Z00005',
       photoNo: 'Z005',
       filmNo: '',
-      photographer: '汪源',
+      photographer: '采集员',
       shotAt: '2025.04.11',
       direction: '由东向西',
-      note: '碑刻可佐证创修土山桥年代',
+      note: '示例照片说明五',
     },
   ]
 })
@@ -981,8 +981,8 @@ onMounted(async () => {
 
         <div class="top-shell__right">
           <div class="top-shell__meta">
-            <span>普查地区：{{ currentUser?.orgName || '山东省济宁市嘉祥县' }}</span>
-            <strong>{{ currentUser?.displayName || '魏萍' }}</strong>
+            <span>普查地区：{{ currentUser?.orgName || '示例普查区域' }}</span>
+            <strong>{{ currentUser?.displayName || '当前用户' }}</strong>
           </div>
           <div class="top-shell__tools">
             <button v-for="index in 6" :key="index" type="button" class="top-shell__tool" :title="`工具${index}`"></button>
@@ -1223,19 +1223,19 @@ onMounted(async () => {
                   </div>
                   <div class="sheet-cover__field">
                     <label>*省（自治区、直辖市）</label>
-                    <span>山东省</span>
+                    <span>示例省</span>
                   </div>
                   <div class="sheet-cover__field">
                     <label>*市（地区、州、盟）</label>
-                    <span>济宁市</span>
+                    <span>示例市</span>
                   </div>
                   <div class="sheet-cover__field">
                     <label>*县（区、市、旗）</label>
-                    <span>嘉祥县</span>
+                    <span>示例县</span>
                   </div>
                   <div class="sheet-cover__field wide">
                     <label>*调查人（签字）</label>
-                    <span>魏萍、张绪华、汪源、陈玲玲、刘传玺</span>
+                    <span>调查员甲、调查员乙、调查员丙</span>
                   </div>
                   <div class="sheet-cover__field">
                     <label>*日期</label>
@@ -1275,7 +1275,7 @@ onMounted(async () => {
                     </tr>
                     <tr>
                       <th>地址及位置</th>
-                      <td colspan="3">{{ selectedRelic.addressText || '山东省济宁市嘉祥县金屯镇土山桥村村北，土山桥村后街' }}</td>
+                      <td colspan="3">{{ selectedRelic.addressText || '示例地址信息' }}</td>
                     </tr>
                     <tr>
                       <th>迁移情况</th>
@@ -1370,13 +1370,13 @@ onMounted(async () => {
                         </div>
                       </td>
                       <th>产权单位（人）</th>
-                      <td>土山桥村村民委员会</td>
+                      <td>示例产权单位</td>
                     </tr>
                     <tr>
                       <th>使用单位（人）</th>
-                      <td>土山桥村村民委员会</td>
+                      <td>示例使用单位</td>
                       <th>上级管理机构</th>
-                      <td>金屯镇人民政府</td>
+                      <td>示例管理机构</td>
                     </tr>
                     <tr>
                       <th>所属行业、系统</th>

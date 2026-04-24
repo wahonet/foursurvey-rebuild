@@ -225,19 +225,130 @@ type PhotoRow = {
   note: string
 }
 
-const shellMenus: { key: MenuKey; label: string }[] = [
-  { key: 'home', label: '首页' },
-  { key: 'data-init', label: '数据初始化' },
-  { key: 'mobile-download', label: '移动端下载基础数据' },
-  { key: 'receive', label: '接收移动端数据' },
-  { key: 'survey', label: '普查数据采集' },
-  { key: 'quality', label: '数据质量核查' },
-  { key: 'report', label: '报送省平台' },
-  { key: 'query', label: '数据查询' },
-  { key: 'basic', label: '基础数据' },
-  { key: 'stats', label: '数据统计' },
-  { key: 'system', label: '系统管理' },
+type ShellNavChild = {
+  id: string
+  key: MenuKey
+  label: string
+}
+
+type ShellNavNode =
+  | {
+      kind: 'item'
+      key: MenuKey
+      label: string
+      icon: string
+    }
+  | {
+      kind: 'group'
+      id: string
+      label: string
+      icon: string
+      children: ShellNavChild[]
+    }
+
+type TopTool = {
+  key: string
+  title: string
+  icon: string
+}
+
+type HomeStatItem = {
+  label: string
+  value: number
+}
+
+type HomeStatSection = {
+  title: string
+  items: HomeStatItem[]
+}
+
+const menuLabelMap: Record<MenuKey, string> = {
+  home: '首页',
+  'data-init': '数据初始化',
+  'mobile-download': '移动端下载基础数据',
+  receive: '接收移动端数据',
+  survey: '普查数据采集',
+  quality: '数据质量核查',
+  report: '报送省平台',
+  query: '数据查询',
+  basic: '基础数据',
+  stats: '数据统计',
+  system: '系统管理',
+}
+
+const shellNavNodes: ShellNavNode[] = [
+  { kind: 'item', key: 'home', label: '首页', icon: 'home' },
+  { kind: 'item', key: 'data-init', label: '数据初始化', icon: 'reset' },
+  { kind: 'item', key: 'mobile-download', label: '移动端下载基础数据', icon: 'download' },
+  { kind: 'item', key: 'receive', label: '接收移动端数据', icon: 'upload' },
+  { kind: 'item', key: 'survey', label: '普查数据采集', icon: 'survey' },
+  { kind: 'item', key: 'quality', label: '数据质量核查', icon: 'check' },
+  { kind: 'item', key: 'report', label: '报送省平台', icon: 'report' },
+  {
+    kind: 'group',
+    id: 'query',
+    label: '数据查询',
+    icon: 'query',
+    children: [
+      { id: 'query-immovable', key: 'query', label: '不可移动文物查询' },
+      { id: 'query-change', key: 'query', label: '变更文物登记表查询' },
+    ],
+  },
+  {
+    kind: 'group',
+    id: 'basic',
+    label: '基础数据',
+    icon: 'basic',
+    children: [
+      { id: 'basic-third', key: 'basic', label: '三普文物信息库' },
+      { id: 'basic-unit', key: 'basic', label: '文保单位信息库' },
+      { id: 'basic-clue', key: 'basic', label: '线索库' },
+      { id: 'basic-topic', key: 'basic', label: '专题文物' },
+    ],
+  },
+  {
+    kind: 'group',
+    id: 'stats',
+    label: '数据统计',
+    icon: 'stats',
+    children: [
+      { id: 'stats-survey', key: 'stats', label: '普查情况统计' },
+      { id: 'stats-workload', key: 'stats', label: '工作量统计' },
+    ],
+  },
+  {
+    kind: 'group',
+    id: 'system',
+    label: '系统管理',
+    icon: 'system',
+    children: [
+      { id: 'system-backup', key: 'system', label: '数据备份管理' },
+      { id: 'system-user', key: 'system', label: '用户管理' },
+      { id: 'system-log', key: 'system', label: '操作日志' },
+      { id: 'system-report', key: 'system', label: '报送设置' },
+    ],
+  },
 ]
+
+const topTools: TopTool[] = [
+  { key: 'account', title: '用户中心', icon: 'user' },
+  { key: 'password', title: '修改密码', icon: 'lock' },
+  { key: 'switch', title: '切换单位', icon: 'switch' },
+  { key: 'scan', title: '扫码', icon: 'scan' },
+  { key: 'fullscreen', title: '全屏', icon: 'expand' },
+  { key: 'about', title: '关于', icon: 'info' },
+]
+
+const homeFlowSteps: { key: MenuKey; label: string; caption: string }[] = [
+  { key: 'data-init', label: '数据初始化', caption: '建立离线底账' },
+  { key: 'mobile-download', label: '移动端下载基础数据', caption: '下发外业底包' },
+  { key: 'receive', label: '接收移动端数据', caption: '汇总回传成果' },
+  { key: 'survey', label: '普查数据采集', caption: '登记与编辑主档' },
+  { key: 'quality', label: '数据质量核查', caption: '核查退回与复核' },
+  { key: 'report', label: '报送省平台', caption: '形成报送成果' },
+]
+
+const homeSupportLinks = ['标准规范', '操作手册', '在线支持', '联系我们', '升级日志']
 
 const detailNavNodes: DetailNavNode[] = [
   { kind: 'single', key: 'cover', label: '封面' },
@@ -293,7 +404,9 @@ const selectedRelic = ref<RelicDetail | null>(null)
 const receiveBatches = ref<ReceiveBatchItem[]>([])
 const selectedBatchId = ref<number | null>(null)
 const selectedBatch = ref<ReceiveBatchDetail | null>(null)
-const selectedMenu = ref<MenuKey>('data-init')
+const selectedMenu = ref<MenuKey>('home')
+const activePageLabel = ref('首页')
+const expandedShellGroups = ref<string[]>([])
 const pageMode = ref<'list' | 'detail'>('list')
 const selectedDetailSection = ref<DetailSectionKey>('cover')
 const selectedInitTab = ref('third-census')
@@ -505,8 +618,25 @@ function logout() {
   pageMode.value = 'list'
 }
 
-function selectMenu(menuKey: MenuKey) {
+function defaultMenuLabel(menuKey: MenuKey) {
+  return menuLabelMap[menuKey] ?? '首页'
+}
+
+function isShellGroupExpanded(groupId: string, keys: MenuKey[]) {
+  return expandedShellGroups.value.includes(groupId) || keys.includes(selectedMenu.value)
+}
+
+function toggleShellGroup(groupId: string) {
+  if (expandedShellGroups.value.includes(groupId)) {
+    expandedShellGroups.value = expandedShellGroups.value.filter((item) => item !== groupId)
+    return
+  }
+  expandedShellGroups.value = [...expandedShellGroups.value, groupId]
+}
+
+function selectMenu(menuKey: MenuKey, label?: string) {
   selectedMenu.value = menuKey
+  activePageLabel.value = label ?? defaultMenuLabel(menuKey)
   pageMode.value = 'list'
   selectedDetailSection.value = 'cover'
   actionMessage.value = ''
@@ -808,9 +938,40 @@ const photoRows = computed<PhotoRow[]>(() => {
   ]
 })
 
-const activeMenuLabel = computed(
-  () => shellMenus.find((item) => item.key === selectedMenu.value)?.label ?? '首页',
-)
+const activeMenuLabel = computed(() => activePageLabel.value || defaultMenuLabel(selectedMenu.value))
+
+const homeSummaryStats = computed<HomeStatItem[]>(() => [
+  { label: '不可移动文物总数', value: relicItems.value.length },
+  { label: '复查文物数', value: relicItems.value.filter((item) => item.sourceType === 'THIRD_CENSUS').length },
+  { label: '新发现文物数', value: relicItems.value.filter((item) => item.sourceType === 'NEW_DISCOVERY').length },
+  { label: '变更文物总数', value: relicItems.value.filter((item) => item.sourceType === 'CHANGE').length },
+  { label: '拆分数', value: 0 },
+  { label: '合并数', value: 0 },
+])
+
+const homeCategoryStats = computed<HomeStatItem[]>(() => [
+  { label: '古文化遗址数', value: relicItems.value.filter((item) => item.categoryCode === 'ANCIENT_SITE').length },
+  { label: '古墓葬数', value: relicItems.value.filter((item) => item.categoryCode === 'ANCIENT_TOMB').length },
+  { label: '古建筑数', value: relicItems.value.filter((item) => item.categoryCode === 'ANCIENT_BUILDING').length },
+  { label: '石窟寺及石刻数', value: relicItems.value.filter((item) => item.categoryCode === 'GROTTO_CARVING').length },
+  { label: '近现代数', value: relicItems.value.filter((item) => item.categoryCode === 'MODERN_HISTORIC').length },
+  { label: '其他', value: relicItems.value.filter((item) => !['ANCIENT_SITE', 'ANCIENT_TOMB', 'ANCIENT_BUILDING', 'GROTTO_CARVING', 'MODERN_HISTORIC'].includes(item.categoryCode)).length },
+])
+
+const homeProgressStats = computed<HomeStatItem[]>(() => [
+  { label: '待普查', value: relicItems.value.filter((item) => item.surveyStatus === 'TO_DO').length },
+  { label: '普查中', value: relicItems.value.filter((item) => item.surveyStatus === 'IN_PROGRESS').length },
+  { label: '已普查', value: relicItems.value.filter((item) => item.surveyStatus === 'DONE').length },
+  { label: '待核查', value: relicItems.value.filter((item) => item.checkStatus === 'PENDING').length },
+  { label: '核查中', value: relicItems.value.filter((item) => item.checkStatus === 'IN_REVIEW').length },
+  { label: '已通过', value: relicItems.value.filter((item) => item.checkStatus === 'PASSED').length },
+])
+
+const homeStatSections = computed<HomeStatSection[]>(() => [
+  { title: '数量统计', items: homeSummaryStats.value },
+  { title: '分类统计', items: homeCategoryStats.value },
+  { title: '普查进度', items: homeProgressStats.value },
+])
 
 const detailCategoryTitle = computed(() => {
   if (!selectedRelic.value) return '古建筑'
@@ -947,7 +1108,10 @@ const currentList = computed<ListConfig | null>(() => {
 })
 
 const showListPage = computed(() => pageMode.value === 'list' && currentList.value !== null)
-const showPlaceholderPage = computed(() => pageMode.value === 'list' && currentList.value === null)
+const showHomePage = computed(() => pageMode.value === 'list' && selectedMenu.value === 'home')
+const showPlaceholderPage = computed(
+  () => pageMode.value === 'list' && selectedMenu.value !== 'home' && currentList.value === null,
+)
 
 const canPrevSection = computed(() => {
   const keys = detailNavNodes.flatMap((item) =>
@@ -983,10 +1147,18 @@ onMounted(async () => {
           <div class="top-shell__meta">
             <span>普查地区：{{ currentUser?.orgName || '示例普查区域' }}</span>
             <strong>{{ currentUser?.displayName || '当前用户' }}</strong>
+            <span class="top-shell__avatar">{{ (currentUser?.displayName || '用').slice(0, 1) }}</span>
           </div>
           <div class="top-shell__tools">
-            <button v-for="index in 6" :key="index" type="button" class="top-shell__tool" :title="`工具${index}`"></button>
-            <button type="button" class="top-shell__logout" @click="logout">退出</button>
+            <button
+              v-for="tool in topTools"
+              :key="tool.key"
+              type="button"
+              class="top-shell__tool"
+              :class="`top-shell__tool--${tool.icon}`"
+              :title="tool.title"
+            ></button>
+            <button type="button" class="top-shell__logout" @click="logout" title="退出登录"></button>
           </div>
         </div>
       </header>
@@ -998,17 +1170,43 @@ onMounted(async () => {
           </div>
 
           <nav class="side-shell__menu">
-            <button
-              v-for="menu in shellMenus"
-              :key="menu.key"
-              type="button"
-              class="side-shell__menu-item"
-              :class="{ 'is-active': selectedMenu === menu.key }"
-              @click="selectMenu(menu.key)"
-            >
-              <span class="side-shell__icon"></span>
-              <span>{{ menu.label }}</span>
-            </button>
+            <template v-for="node in shellNavNodes" :key="node.kind === 'item' ? node.key : node.id">
+              <button
+                v-if="node.kind === 'item'"
+                type="button"
+                class="side-shell__menu-item"
+                :class="{ 'is-active': selectedMenu === node.key && activeMenuLabel === node.label }"
+                @click="selectMenu(node.key, node.label)"
+              >
+                <span class="side-shell__icon" :data-icon="node.icon"></span>
+                <span>{{ node.label }}</span>
+              </button>
+
+              <div
+                v-else
+                class="side-nav-group"
+                :class="{ 'is-open': isShellGroupExpanded(node.id, node.children.map((child) => child.key)) }"
+              >
+                <button type="button" class="side-nav-group__title" @click="toggleShellGroup(node.id)">
+                  <span class="side-shell__icon" :data-icon="node.icon"></span>
+                  <span>{{ node.label }}</span>
+                  <span class="side-nav-group__arrow"></span>
+                </button>
+                <div class="side-nav-group__children">
+                  <button
+                    v-for="child in node.children"
+                    :key="child.id"
+                    type="button"
+                    class="side-nav-child"
+                    :class="{ 'is-active': selectedMenu === child.key && activeMenuLabel === child.label }"
+                    @click="selectMenu(child.key, child.label)"
+                  >
+                    <span class="side-nav-child__dot"></span>
+                    <span>{{ child.label }}</span>
+                  </button>
+                </div>
+              </div>
+            </template>
           </nav>
         </aside>
 
@@ -1018,7 +1216,50 @@ onMounted(async () => {
             <span>{{ activeMenuLabel }}</span>
           </div>
 
-          <section v-if="showListPage" class="page-card">
+          <section v-if="showHomePage" class="home-shell">
+            <div class="home-grid">
+              <section class="home-panel home-panel--flow">
+                <div class="home-panel__title">流程导航</div>
+                <div class="home-flow">
+                  <button
+                    v-for="step in homeFlowSteps"
+                    :key="step.key"
+                    type="button"
+                    class="home-flow__item"
+                    @click="selectMenu(step.key, menuLabelMap[step.key])"
+                  >
+                    <span class="home-flow__icon"></span>
+                    <span class="home-flow__label">{{ step.label }}</span>
+                    <span class="home-flow__caption">{{ step.caption }}</span>
+                  </button>
+                </div>
+              </section>
+
+              <aside class="home-stats">
+                <section v-for="section in homeStatSections" :key="section.title" class="home-panel home-panel--stats">
+                  <div class="home-panel__title">{{ section.title }}</div>
+                  <div class="home-stat-grid">
+                    <div v-for="item in section.items" :key="item.label" class="home-stat-card">
+                      <div class="home-stat-card__label">{{ item.label }}</div>
+                      <div class="home-stat-card__value">{{ item.value }}</div>
+                    </div>
+                  </div>
+                </section>
+              </aside>
+            </div>
+
+            <section class="home-panel home-panel--support">
+              <div class="home-panel__title">技术支持</div>
+              <div class="home-support">
+                <button v-for="item in homeSupportLinks" :key="item" type="button" class="home-support__item">
+                  <span class="home-support__icon"></span>
+                  <span>{{ item }}</span>
+                </button>
+              </div>
+            </section>
+          </section>
+
+          <section v-else-if="showListPage" class="page-card">
             <div class="page-tabs">
               <button
                 v-for="tab in currentList?.tabs"

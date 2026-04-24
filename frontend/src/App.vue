@@ -186,6 +186,7 @@ type ListConfig = {
   headers: string[]
   rows: TableRow[]
   supportsSearch: boolean
+  searchPlaceholder?: string
 }
 
 type DetailNavNode =
@@ -997,6 +998,25 @@ const receiveBatchChips = computed(() =>
 
 const currentList = computed<ListConfig | null>(() => {
   if (selectedMenu.value === 'data-init') {
+    const rows: TableRow[] =
+      selectedInitTab.value === 'third-census'
+        ? relicItems.value.map((item, index) => ({
+            id: item.id,
+            clickable: true,
+            cells: [
+              { text: '', type: 'checkbox' },
+              { text: index + 1 },
+              { text: item.checkStatus === 'PASSED' ? '已复查' : '待复查', type: 'link' },
+              { text: formatLegacyCode(item.objectCode) },
+              { text: item.objectName, type: 'link' },
+              { text: formatCategory(item.categoryCode) },
+              { text: '尚未核定为保护单位' },
+              { text: item.addressText || '-' },
+              { text: mockEraById(item.id) },
+            ],
+          }))
+        : []
+
     return {
       tabs: [
         { key: 'third-census', label: '三普文物信息库' },
@@ -1013,26 +1033,34 @@ const currentList = computed<ListConfig | null>(() => {
         { key: 'export-excel', label: '导出Excel', variant: 'primary' },
       ],
       headers: [' ', '序号', '是否复查', '编号', '名称', '类别', '文物级别', '地址', '年代'],
-      rows: relicItems.value.map((item, index) => ({
-        id: item.id,
-        clickable: true,
-        cells: [
-          { text: '', type: 'checkbox' },
-          { text: index + 1 },
-          { text: item.checkStatus === 'PASSED' ? '已复查' : '待复查', type: 'link' },
-          { text: formatLegacyCode(item.objectCode) },
-          { text: item.objectName, type: 'link' },
-          { text: formatCategory(item.categoryCode) },
-          { text: '尚未核定为保护单位' },
-          { text: item.addressText || '-' },
-          { text: mockEraById(item.id) },
-        ],
-      })),
+      rows,
       supportsSearch: true,
+      searchPlaceholder: '编号,名称',
     }
   }
 
   if (selectedMenu.value === 'survey') {
+    const rows: TableRow[] =
+      selectedSurveyTab.value === 'collect'
+        ? relicItems.value.map((item, index) => ({
+            id: item.id,
+            clickable: true,
+            cells: [
+              { text: '', type: 'checkbox' },
+              { text: index + 1 },
+              { text: formatSurveyStatus(item.surveyStatus) },
+              { text: formatSource(item.sourceType) },
+              { text: formatLegacyCode(item.objectCode) },
+              { text: item.objectName, type: 'link' },
+              { text: formatCategory(item.categoryCode) },
+              { text: '尚未核定为保护单位' },
+              { text: item.addressText || '-' },
+              { text: mockEraById(item.id) },
+              { text: index + 1 },
+            ],
+          }))
+        : []
+
     return {
       tabs: [
         { key: 'collect', label: '普查数据采集' },
@@ -1051,29 +1079,14 @@ const currentList = computed<ListConfig | null>(() => {
         { key: 'import-export', label: '导入导出', variant: 'primary' },
       ],
       headers: [' ', '序号', '状态', '调查类型', '编号', '名称', '类别', '文物级别', '地址', '年代', '下载次数'],
-      rows: relicItems.value.map((item, index) => ({
-        id: item.id,
-        clickable: true,
-        cells: [
-          { text: '', type: 'checkbox' },
-          { text: index + 1 },
-          { text: formatSurveyStatus(item.surveyStatus) },
-          { text: formatSource(item.sourceType) },
-          { text: formatLegacyCode(item.objectCode) },
-          { text: item.objectName, type: 'link' },
-          { text: formatCategory(item.categoryCode) },
-          { text: '尚未核定为保护单位' },
-          { text: item.addressText || '-' },
-          { text: mockEraById(item.id) },
-          { text: index + 1 },
-        ],
-      })),
+      rows,
       supportsSearch: true,
+      searchPlaceholder: '编号,名称',
     }
   }
 
   if (selectedMenu.value === 'receive') {
-    const records = selectedBatch.value?.records ?? []
+    const records = selectedReceiveTab.value === 'immovable' ? selectedBatch.value?.records ?? [] : []
     return {
       tabs: [
         { key: 'immovable', label: '不可移动文物' },
@@ -1086,13 +1099,15 @@ const currentList = computed<ListConfig | null>(() => {
         { key: 'upload-offline', label: '离线数据上传', variant: 'primary' },
         { key: 'export-excel', label: '导出Excel', variant: 'primary' },
       ],
-      headers: ['序号', '状态', '调查类型', '名称', '类别', '地址', '操作人', '操作时间'],
+      headers: [' ', '序号', '状态', '调查类型', '编号', '名称', '类别', '地址', '操作人', '操作时间'],
       rows: records.map((record, index) => ({
         id: record.id,
         cells: [
+          { text: '', type: 'checkbox' },
           { text: index + 1 },
           { text: formatBatchStatus(record.receiveStatus) },
           { text: formatSource(record.surveyType) },
+          { text: record.recordNo },
           { text: record.objectName, type: 'link' },
           { text: formatCategory(record.categoryCode) },
           { text: record.addressText || '-' },
@@ -1101,6 +1116,7 @@ const currentList = computed<ListConfig | null>(() => {
         ],
       })),
       supportsSearch: true,
+      searchPlaceholder: '编号,名称',
     }
   }
 
@@ -1297,7 +1313,7 @@ onMounted(async () => {
                 <input
                   v-model.trim="relicKeyword"
                   type="text"
-                  placeholder="编号,名称"
+                  :placeholder="currentList?.searchPlaceholder || '编号,名称'"
                   @keyup.enter="loadRelics"
                 />
                 <button type="button" class="toolbar-button primary" @click="loadRelics">查询</button>

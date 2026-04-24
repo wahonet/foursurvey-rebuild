@@ -1264,6 +1264,15 @@ textarea {
   font-weight: 600;
 }
 
+.sheet-table__section {
+  color: #0f5fae;
+}
+
+.sheet-table__stack {
+  display: grid;
+  gap: 10px;
+}
+
 .choice-inline,
 .choice-block {
   display: flex;
@@ -1386,6 +1395,66 @@ textarea {
   gap: 18px;
   color: #5f6d7d;
   font-size: 14px;
+}
+
+.sheet-preview-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sheet-preview-card {
+  border: 1px solid #dfe5ef;
+  background: #fbfdff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.sheet-preview-card__title {
+  color: #103b73;
+  font-weight: 700;
+}
+
+.sheet-preview-card__viewport {
+  min-height: 160px;
+  border: 1px solid #d5deea;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  color: #4b5f77;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sheet-preview-card__viewport--drawing {
+  background:
+    linear-gradient(0deg, rgba(15, 95, 174, 0.08), rgba(15, 95, 174, 0.08)),
+    repeating-linear-gradient(
+      0deg,
+      #ffffff 0,
+      #ffffff 22px,
+      #edf3fb 22px,
+      #edf3fb 23px
+    );
+}
+
+.sheet-preview-card__viewport--vector {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(21, 99, 199, 0.22) 0 8px, transparent 9px),
+    radial-gradient(circle at 52% 50%, rgba(15, 95, 174, 0.2) 0 10px, transparent 11px),
+    radial-gradient(circle at 76% 34%, rgba(27, 122, 208, 0.22) 0 7px, transparent 8px),
+    linear-gradient(90deg, transparent 0 24%, rgba(189, 205, 224, 0.6) 24% 25%, transparent 25% 49%, rgba(189, 205, 224, 0.6) 49% 50%, transparent 50% 74%, rgba(189, 205, 224, 0.6) 74% 75%, transparent 75%),
+    linear-gradient(transparent 0 24%, rgba(189, 205, 224, 0.6) 24% 25%, transparent 25% 49%, rgba(189, 205, 224, 0.6) 49% 50%, transparent 50% 74%, rgba(189, 205, 224, 0.6) 74% 75%, transparent 75%),
+    #ffffff;
+}
+
+.sheet-preview-card__meta {
+  display: grid;
+  gap: 6px;
+  color: #5f6d7d;
+  font-size: 13px;
 }
 
 .photo-thumb {

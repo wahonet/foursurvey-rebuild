@@ -502,6 +502,10 @@ function formatSurveyStatus(status: string | null | undefined) {
   return findDictLabel(surveyStatusItems.value, status)
 }
 
+function formatCheckStatus(status: string | null | undefined) {
+  return findDictLabel(checkStatusItems.value, status)
+}
+
 function formatCategory(categoryCode: string | null | undefined) {
   return findDictLabel(relicCategoryItems.value, categoryCode)
 }
@@ -1758,12 +1762,32 @@ onMounted(async () => {
                       <th>迁移情况</th>
                       <td colspan="3">
                         <div class="choice-inline">
+                          <span>是否整体迁移并在新址上占有独立地域范围</span>
                           <span class="choice-option">
                             <span class="choice-option__dot"></span>是
                           </span>
                           <span class="choice-option is-checked">
                             <span class="choice-option__dot"></span>否
                           </span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="sheet-table__section">保护区划</th>
+                      <td colspan="3">
+                        <div class="sheet-table__stack">
+                          <div class="choice-inline">
+                            <span>是否已公布保护范围</span>
+                            <span class="choice-option"><span class="choice-option__dot"></span>是</span>
+                            <span class="choice-option is-checked"><span class="choice-option__dot"></span>否</span>
+                          </div>
+                          <div class="choice-inline">
+                            <span>是否已公布建设控制地带</span>
+                            <span class="choice-option"><span class="choice-option__dot"></span>是</span>
+                            <span class="choice-option is-checked"><span class="choice-option__dot"></span>否</span>
+                          </div>
+                          <div>保护范围：{{ selectedRelic.protectionScope || '未填写' }}</div>
+                          <div>建设控制地带：{{ selectedRelic.constructionControl || '未填写' }}</div>
                         </div>
                       </td>
                     </tr>
@@ -1776,22 +1800,6 @@ onMounted(async () => {
                     <tr>
                       <th>所属文物保护单位名称</th>
                       <td colspan="3">-</td>
-                    </tr>
-                    <tr>
-                      <th>是否已公布保护范围</th>
-                      <td>
-                        <div class="choice-inline">
-                          <span class="choice-option"><span class="choice-option__dot"></span>是</span>
-                          <span class="choice-option is-checked"><span class="choice-option__dot"></span>否</span>
-                        </div>
-                      </td>
-                      <th>是否已公布建设控制地带</th>
-                      <td>
-                        <div class="choice-inline">
-                          <span class="choice-option"><span class="choice-option__dot"></span>是</span>
-                          <span class="choice-option is-checked"><span class="choice-option__dot"></span>否</span>
-                        </div>
-                      </td>
                     </tr>
                     <tr>
                       <th>年代</th>
@@ -1876,6 +1884,28 @@ onMounted(async () => {
                           <span class="choice-option"><span class="choice-option__dot"></span>未开放</span>
                         </div>
                       </td>
+                    </tr>
+                    <tr>
+                      <th>现状用途</th>
+                      <td>{{ selectedRelic.currentUse || '村落通行与日常检修使用' }}</td>
+                      <th>保存状况</th>
+                      <td>一般</td>
+                    </tr>
+                    <tr>
+                      <th>简介</th>
+                      <td colspan="3">{{ selectedRelic.abstractText || '当前对象为示例数据，用于复刻原系统登记表的信息密度和版式。' }}</td>
+                    </tr>
+                    <tr>
+                      <th>调查人</th>
+                      <td>调查员甲、调查员乙、调查员丙</td>
+                      <th>调查日期</th>
+                      <td>2026.04.11</td>
+                    </tr>
+                    <tr>
+                      <th>填报状态</th>
+                      <td>{{ formatSurveyStatus(selectedRelic.surveyStatus) }}</td>
+                      <th>核查状态</th>
+                      <td>{{ formatCheckStatus(selectedRelic.checkStatus) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -2213,6 +2243,11 @@ onMounted(async () => {
               </div>
 
               <div v-else-if="selectedDetailSection === 'drawing'" class="sheet-panel sheet-panel--list">
+                <div class="detail-table-toolbar">
+                  <button type="button" class="toolbar-button primary">查看图纸</button>
+                  <button type="button" class="toolbar-button ghost">导出目录</button>
+                </div>
+
                 <table class="list-table detail-table">
                   <thead>
                     <tr>
@@ -2247,6 +2282,20 @@ onMounted(async () => {
                     <button type="button" class="is-active">1</button>
                     <button type="button">下一页</button>
                     <span>10 条/页</span>
+                  </div>
+                </div>
+
+                <div class="sheet-preview-grid">
+                  <div v-for="row in drawingRows" :key="`${row.order}-preview`" class="sheet-preview-card">
+                    <div class="sheet-preview-card__title">{{ row.name }}</div>
+                    <div class="sheet-preview-card__viewport sheet-preview-card__viewport--drawing">
+                      <span>{{ row.drawingType }}</span>
+                    </div>
+                    <div class="sheet-preview-card__meta">
+                      <span>比例尺：{{ row.scaleText }}</span>
+                      <span>图幅：{{ row.sheetSize }}</span>
+                      <span>制图人：{{ row.author }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2299,6 +2348,7 @@ onMounted(async () => {
               <div v-else-if="selectedDetailSection === 'vector'" class="sheet-panel sheet-panel--list">
                 <div class="detail-table-toolbar">
                   <button type="button" class="toolbar-button primary">查看矢量图</button>
+                  <button type="button" class="toolbar-button ghost">刷新图层</button>
                 </div>
 
                 <table class="list-table detail-table">
@@ -2335,6 +2385,20 @@ onMounted(async () => {
                     <button type="button" class="is-active">1</button>
                     <button type="button">下一页</button>
                     <span>10 条/页</span>
+                  </div>
+                </div>
+
+                <div class="sheet-preview-grid">
+                  <div v-for="row in vectorRows" :key="`${row.order}-vector`" class="sheet-preview-card">
+                    <div class="sheet-preview-card__title">{{ row.name }}</div>
+                    <div class="sheet-preview-card__viewport sheet-preview-card__viewport--vector">
+                      <span>{{ row.graphType }} / {{ row.layerName }}</span>
+                    </div>
+                    <div class="sheet-preview-card__meta">
+                      <span>坐标系：{{ row.coordinateSystem }}</span>
+                      <span>点位数：{{ row.pointCount }}</span>
+                      <span>更新时间：{{ row.updatedAt }}</span>
+                    </div>
                   </div>
                 </div>
               </div>

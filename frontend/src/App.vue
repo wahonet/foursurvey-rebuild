@@ -226,6 +226,23 @@ type PhotoRow = {
   note: string
 }
 
+type AttachmentRow = {
+  order: number
+  groupName: string
+  name: string
+  categoryName: string
+  areaText: string
+}
+
+type RelationRow = {
+  order: number
+  code: string
+  name: string
+  categoryName: string
+  addressText: string
+  noteText: string
+}
+
 type ShellNavChild = {
   id: string
   key: MenuKey
@@ -866,7 +883,65 @@ const bodyRows = computed(() => {
   ]
 })
 
+const attachmentRows = computed<AttachmentRow[]>(() => {
+  const name = selectedRelic.value?.objectName || '示例文物点'
+  return [
+    {
+      order: 1,
+      groupName: '附属构件',
+      name: `${name}附属碑刻`,
+      categoryName: '石刻构件',
+      areaText: '4.20平方米',
+    },
+    {
+      order: 2,
+      groupName: '附属构件',
+      name: `${name}栏板`,
+      categoryName: '建构筑物',
+      areaText: '12.60平方米',
+    },
+  ]
+})
+
 const boundaryRows = computed(() => createBoundaryRows(selectedRelic.value))
+
+const clueRows = computed<RelationRow[]>(() => [
+  {
+    order: 1,
+    code: 'XS-2026-001',
+    name: '示例线索点一',
+    categoryName: '古建筑',
+    addressText: '示例区域二',
+    noteText: '与本点位空间位置相近，来源于线索库。',
+  },
+  {
+    order: 2,
+    code: 'XS-2026-009',
+    name: '示例线索点二',
+    categoryName: '石窟寺及石刻',
+    addressText: '示例区域一',
+    noteText: '作为关联比对对象保留。',
+  },
+])
+
+const topicRows = computed<RelationRow[]>(() => [
+  {
+    order: 1,
+    code: 'ZT-2026-003',
+    name: '示例专题文物点一',
+    categoryName: '桥涵码头',
+    addressText: '示例区域二',
+    noteText: '纳入桥梁专题名录。',
+  },
+  {
+    order: 2,
+    code: 'ZT-2026-008',
+    name: '示例专题文物点二',
+    categoryName: '交通遗产',
+    addressText: '示例区域三',
+    noteText: '用于专题关联展示。',
+  },
+])
 
 const photoRows = computed<PhotoRow[]>(() => {
   const name = selectedRelic.value?.objectName || '示例文物点'
@@ -1766,6 +1841,39 @@ onMounted(async () => {
                 </div>
               </div>
 
+              <div v-else-if="selectedDetailSection === 'attachment'" class="sheet-panel sheet-panel--list">
+                <table class="list-table detail-table detail-table--compact">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>分组</th>
+                      <th>名称</th>
+                      <th>类别</th>
+                      <th>面积</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in attachmentRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.groupName }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.categoryName }}</td>
+                      <td>{{ row.areaText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ attachmentRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
               <div v-else-if="selectedDetailSection === 'boundary'" class="sheet-panel sheet-panel--list">
                 <div class="detail-table-toolbar">
                   <button type="button" class="toolbar-button primary">查看点位分布</button>
@@ -1807,6 +1915,76 @@ onMounted(async () => {
                     <button type="button">上一页</button>
                     <button type="button" class="is-active">1</button>
                     <button type="button">2</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="selectedDetailSection === 'clue'" class="sheet-panel sheet-panel--list">
+                <table class="list-table detail-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>编号</th>
+                      <th>名称</th>
+                      <th>类别</th>
+                      <th>地址</th>
+                      <th>关联说明</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in clueRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.code }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.categoryName }}</td>
+                      <td>{{ row.addressText }}</td>
+                      <td>{{ row.noteText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ clueRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
+                    <button type="button">下一页</button>
+                    <span>10 条/页</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="selectedDetailSection === 'topic'" class="sheet-panel sheet-panel--list">
+                <table class="list-table detail-table">
+                  <thead>
+                    <tr>
+                      <th>序号</th>
+                      <th>编号</th>
+                      <th>名称</th>
+                      <th>类别</th>
+                      <th>地址</th>
+                      <th>备注</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in topicRows" :key="row.order">
+                      <td>{{ row.order }}</td>
+                      <td>{{ row.code }}</td>
+                      <td>{{ row.name }}</td>
+                      <td>{{ row.categoryName }}</td>
+                      <td>{{ row.addressText }}</td>
+                      <td>{{ row.noteText }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="detail-table-footer">
+                  <span>共 {{ topicRows.length }} 条</span>
+                  <div class="pager">
+                    <button type="button">上一页</button>
+                    <button type="button" class="is-active">1</button>
                     <button type="button">下一页</button>
                     <span>10 条/页</span>
                   </div>
